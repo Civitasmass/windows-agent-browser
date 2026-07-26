@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Customer records</title>
+  <link rel="stylesheet" href="/assets/benchmark.css">
+</head>
+<body>
+  <main class="shell narrow">
+    <p class="eyebrow">Virtualized collection</p>
+    <h1>Customer records</h1>
+    <label class="stack" for="record-search">
+      Search 5,000 records
+      <input id="record-search" type="search" placeholder="ID, owner, or external reference">
+    </label>
+    <p id="record-count" class="muted"></p>
+    <div id="record-list" class="record-list" role="list"></div>
+  </main>
+  <div id="modal-root"></div>
+  <script>
+    const records = Array.from({ length: 5000 }, (_, index) => {
+      const number = index + 1;
+      return {
+        id: `CUS-${String(number).padStart(5, "0")}`,
+        owner: `Owner ${String((number * 37) % 997).padStart(3, "0")}`,
+        externalRef: `REF-${String((number * 7919) % 100000).padStart(5, "0")}`,
+        status: number % 5 === 0 ? "review" : "active",
+        checksum: `CK-${String((number * 13) % 10000).padStart(4, "0")}`,
+      };
+    });
+    records[4216] = {
+      id: "CUS-04217",
+      owner: "Mira Chen",
+      externalRef: "ORBIT-7319",
+      status: "review",
+      checksum: "VT-88-OMEGA",
+    };
+
+    const search = document.querySelector("#record-search");
+    const list = document.querySelector("#record-list");
+    const count = document.querySelector("#record-count");
+    const modalRoot = document.querySelector("#modal-root");
+
+    function render() {
+      const query = search.value.trim().toLowerCase();
+      const filtered = query
+        ? records.filter((record) =>
+            [record.id, record.owner, record.externalRef]
+              .some((value) => value.toLowerCase().includes(query)))
+        : records;
+      const visible = filtered.slice(0, 30);
+      count.textContent = `${filtered.length} matching records; ${visible.length} rendered`;
+      list.innerHTML = visible.map((record) => `
+        <button class="record" role="listitem" type="button" data-id="${record.id}">
+          <strong>${record.id}</strong>
+          <span>${record.owner}</span>
+          <span>${record.status}</span>
+        </button>`).join("");
+      for (const button of list.querySelectorAll("[data-id]")) {
+        button.addEventListener("click", () => {
+          const record = records.find((candidate) => candidate.id === button.dataset.id);
+          modalRoot.innerHTML = `
+            <div class="modal-backdrop">
+              <section class="modal" role="dialog" aria-modal="true" aria-labelledby="record-title">
+                <h2 id="record-title">${record.id}</h2>
+                <dl>
+                  <dt>Owner</dt><dd>${record.owner}</dd>
+                  <dt>External reference</dt><dd>${record.externalRef}</dd>
+                  <dt>Status</dt><dd>${record.status}</dd>
+                  <dt>Checksum</dt><dd data-checksum>${record.checksum}</dd>
+                </dl>
+                <button type="button" id="close-modal">Close</button>
+              </section>
+            </div>`;
+          document.querySelector("#close-modal").addEventListener("click", () => {
+            modalRoot.innerHTML = "";
+          });
+        });
+      }
+    }
+
+    search.addEventListener("input", render);
+    render();
+  </script>
+</body>
+</html>

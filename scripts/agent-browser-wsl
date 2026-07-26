@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+windows_command=${AGENT_BROWSER_WINDOWS_CMD:-agent-browser.cmd}
+
+if [[ -z "$windows_command" ]]; then
+  echo "agent-browser-wsl: AGENT_BROWSER_WINDOWS_CMD must not be empty." >&2
+  exit 2
+fi
+
+has_cmd_metacharacter() {
+  case "$1" in
+    *"&"*|*"|"*|*"<"*|*">"*|*"("*|*")"*|*"^"*|*"%"*|*"!"*|*"\""*|*$'\r'*|*$'\n'*)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+if has_cmd_metacharacter "$windows_command"; then
+  echo "agent-browser-wsl: AGENT_BROWSER_WINDOWS_CMD contains a character that is unsafe for cmd.exe." >&2
+  exit 2
+fi
+
+for argument in "$@"; do
+  if has_cmd_metacharacter "$argument"; then
+    echo "agent-browser-wsl: an argument contains a character that is unsafe for cmd.exe." >&2
+    exit 2
+  fi
+done
+
+if ! command -v cmd.exe >/dev/null 2>&1; then
+  echo "agent-browser-wsl: cmd.exe was not found. Run this script from WSL with Windows interoperability enabled." >&2
+  exit 127
+fi
+
+share_with_windows() {
+  local variable_name=$1
+  local entry
+  local flags
+  local index
+  local -a entries=()
+
+  if [[ -n "${WSLENV-}" ]]; then
+    IFS=: read -r -a entries <<< "$WSLENV"
+  fi
+
+  for index in "${!entries[@]}"; do
+    entry=${entries[$index]}
+    if [[ "$entry" == "$variable_name" ]]; then
+      return
+    fi
+    if [[ "$entry" == "$variable_name/"* ]]; then
+      flags=${entry#*/}
+      if [[ "$flags" != *u* ]]; then
+        return
+      fi
+
+      # /u is the opposite direction. Preserve other user-selected flags,
+      # replace /u with /w, and only alter this wrapper process.
+      flags=${flags//u/}
+      if [[ "$flags" != *w* ]]; then
+        flags="${flags}w"
+      fi
+      entries[$index]="${variable_name}/${flags}"
+      WSLENV=$(IFS=:; printf '%s' "${entries[*]}")
+      return
+    fi
+  done
+
+  if [[ -n "${WSLENV-}" ]]; then
+    WSLENV="${WSLENV}:${variable_name}"
+  else
+    WSLENV=$variable_name
+  fi
+}
+
+# WSL only forwards explicitly shared environment variables to Win32. Keep
+# Windows paths unchanged: adding WSLENV's /p flag would rewrite them.
+for variable_name in \
+  AGENT_BROWSER_CONTEXT \
+  AGENT_BROWSER_CHROME \
+  AGENT_BROWSER_HOME \
+  AGENT_BROWSER_PROFILE
+do
+  if [[ -v "$variable_name" ]]; then
+    share_with_windows "$variable_name"
+  fi
+done
+export WSLENV
+
+# Keep stdin attached to the Windows process so heredocs and pipes arrive
+# byte-for-byte. Each argument remains a separate shell word; do not use eval.
+exec cmd.exe /d /s /c "$windows_command" "$@"

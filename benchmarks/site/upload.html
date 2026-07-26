@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Order import validator</title>
+  <link rel="stylesheet" href="/assets/benchmark.css">
+</head>
+<body>
+  <main class="shell narrow">
+    <p class="eyebrow">Local file workflow</p>
+    <h1>Order import validator</h1>
+    <p class="muted">Files are parsed locally in this page and are not sent to the server.</p>
+    <label class="file-drop" for="orders-file">
+      <strong>Choose an orders CSV</strong>
+      <span>Required columns: order_id, quantity, unit_price</span>
+      <input id="orders-file" type="file" accept=".csv,text/csv">
+    </label>
+    <section id="report" aria-live="polite"></section>
+  </main>
+  <script>
+    const input = document.querySelector("#orders-file");
+    const report = document.querySelector("#report");
+
+    input.addEventListener("change", async () => {
+      const file = input.files[0];
+      if (!file) return;
+      const lines = (await file.text()).trim().split(/\r?\n/);
+      const headers = lines.shift().split(",");
+      const index = Object.fromEntries(headers.map((header, position) => [header, position]));
+      const valid = [];
+      const invalid = [];
+
+      for (const [offset, line] of lines.entries()) {
+        const values = line.split(",");
+        const orderId = values[index.order_id];
+        const quantityText = values[index.quantity];
+        const priceText = values[index.unit_price];
+        const quantity = Number(quantityText);
+        const price = Number(priceText);
+        const errors = [];
+        if (!Number.isInteger(quantity)) errors.push("quantity_not_integer");
+        else if (quantity <= 0) errors.push("quantity_not_positive");
+        if (!Number.isFinite(price) || price < 0) errors.push("invalid_price");
+        const row = { row: offset + 2, orderId, quantityText, priceText, errors };
+        if (errors.length) invalid.push(row);
+        else valid.push({ ...row, total: quantity * price });
+      }
+
+      const total = valid.reduce((sum, row) => sum + row.total, 0);
+      report.innerHTML = `
+        <div class="panel result" data-upload-report>
+          <h2>Validation complete</h2>
+          <dl>
+            <dt>Valid rows</dt><dd data-valid>${valid.length}</dd>
+            <dt>Invalid rows</dt><dd data-invalid>${invalid.length}</dd>
+            <dt>Valid total</dt><dd data-total>${total.toFixed(2)}</dd>
+          </dl>
+          <table>
+            <thead><tr><th>Row</th><th>Order</th><th>Errors</th></tr></thead>
+            <tbody>${invalid.map((row) =>
+              `<tr><td>${row.row}</td><td>${row.orderId}</td><td>${row.errors.join("+")}</td></tr>`
+            ).join("")}</tbody>
+          </table>
+        </div>`;
+    });
+  </script>
+</body>
+</html>

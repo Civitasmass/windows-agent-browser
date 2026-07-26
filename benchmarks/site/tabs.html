@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inventory reconciliation</title>
+  <link rel="stylesheet" href="/assets/benchmark.css">
+</head>
+<body>
+  <main class="shell">
+    <p class="eyebrow">Ledger control</p>
+    <h1>Inventory reconciliation</h1>
+    <p class="muted">Open each satellite report in its own tab and compare the totals with this ledger.</p>
+    <section class="panel">
+      <h2>Expected network totals</h2>
+      <table data-ledger>
+        <thead><tr><th>SKU</th><th>Expected quantity</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">AX-41</th><td>214</td></tr>
+          <tr><th scope="row">BK-07</th><td>241</td></tr>
+          <tr><th scope="row">CT-90</th><td>111</td></tr>
+        </tbody>
+      </table>
+    </section>
+    <nav class="link-grid" aria-label="Warehouse reports">
+      <a class="panel" target="_blank" href="/warehouse/north"><strong>North report</strong><br><span class="muted">Open satellite tab</span></a>
+      <a class="panel" target="_blank" href="/warehouse/south"><strong>South report</strong><br><span class="muted">Open satellite tab</span></a>
+      <a class="panel" target="_blank" href="/warehouse/west"><strong>West report</strong><br><span class="muted">Open satellite tab</span></a>
+    </nav>
+  </main>
+</body>
+</html>

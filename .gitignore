@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.tgz
+.DS_Store
+
+# Local browser state and captures may contain authenticated or personal data.
+.env
+.env.*
+!.env.example
+.agent-browser/
+artifacts/
+screenshots/
+*.har
+benchmarks/artifacts/

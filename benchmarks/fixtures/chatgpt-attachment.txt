@@ -1,0 +1,10 @@
+Windows Agent Browser benchmark fixture
+
+This file contains no credentials or personal data.
+
+benchmark_id = ORBIT-7319
+alpha = 17
+beta = 29
+gamma = 36
+
+Expected arithmetic: alpha + beta + gamma

@@ -1,0 +1,62 @@
+{
+  "name": "windows-agent-browser",
+  "version": "0.1.0",
+  "description": "Local-first Chrome and Edge browser automation for AI coding agents on Windows.",
+  "type": "module",
+  "bin": {
+    "agent-browser": "./dist/bin.js"
+  },
+  "files": [
+    "benchmarks",
+    "!benchmarks/artifacts/**",
+    "dist",
+    "docs",
+    "!docs/assets/**",
+    "scripts",
+    "skills",
+    "README.md",
+    "SECURITY.md",
+    "CONTRIBUTING.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "benchmark:serve": "node benchmarks/server.mjs",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "check": "npm run typecheck && npm test",
+    "prepack": "npm run check"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "keywords": [
+    "ai-agents",
+    "agent-browser",
+    "browser",
+    "browser-automation",
+    "cdp",
+    "chrome",
+    "chrome-devtools-protocol",
+    "edge",
+    "accessibility-tree",
+    "codex",
+    "claude",
+    "claude-code",
+    "windows",
+    "wsl"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Civitasmass/windows-agent-browser.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Civitasmass/windows-agent-browser/issues"
+  },
+  "homepage": "https://github.com/Civitasmass/windows-agent-browser#readme",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "typescript": "^5.8.3"
+  }
+}

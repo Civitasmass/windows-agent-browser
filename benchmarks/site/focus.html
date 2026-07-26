@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Minimized window recovery</title>
+  <link rel="stylesheet" href="/assets/benchmark.css">
+</head>
+<body>
+  <main class="shell narrow">
+    <p class="eyebrow">Windows foreground regression</p>
+    <h1>Minimized window recovery</h1>
+    <p class="muted">The test driver minimizes this browser before the agent acts.</p>
+    <button id="focus-action" type="button">Run focus test</button>
+    <section id="focus-result" aria-live="polite"></section>
+  </main>
+  <script>
+    document.querySelector("#focus-action").addEventListener("click", () => {
+      document.querySelector("#focus-result").innerHTML = `
+        <div class="panel result" data-focus-result>
+          <h2>Input received</h2>
+          <p>Recovery token: <strong data-token>FOCUS-2048</strong></p>
+        </div>`;
+    });
+  </script>
+</body>
+</html>

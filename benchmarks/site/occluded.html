@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Occluded window recovery</title>
+  <link rel="stylesheet" href="/assets/benchmark.css">
+</head>
+<body>
+  <main class="shell narrow">
+    <p class="eyebrow">Windows native occlusion regression</p>
+    <h1>Occluded window recovery</h1>
+    <p class="muted">
+      The test driver fully covers this non-minimized browser before the agent acts.
+    </p>
+    <button id="occlusion-action" type="button">Run occlusion test</button>
+    <section id="occlusion-result" aria-live="polite"></section>
+  </main>
+  <script>
+    document.querySelector("#occlusion-action").addEventListener("click", () => {
+      document.querySelector("#occlusion-result").innerHTML = `
+        <div class="panel result" data-occlusion-result>
+          <h2>Input received</h2>
+          <p>Recovery token: <strong data-token>COVER-7319</strong></p>
+        </div>`;
+    });
+  </script>
+</body>
+</html>

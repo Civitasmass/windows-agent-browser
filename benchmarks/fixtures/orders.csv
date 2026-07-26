@@ -1,0 +1,6 @@
+order_id,quantity,unit_price
+A100,2,19.50
+A101,three,7.00
+A102,-1,12.00
+A103,4,5.25
+A104,1,NaN

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Revenue dashboard</title>
+  <link rel="stylesheet" href="/assets/benchmark.css">
+</head>
+<body>
+  <main class="shell" data-app-version="2">
+    <p class="eyebrow">Acme analytics</p>
+    <h1>Revenue dashboard</h1>
+    <p class="muted">Snapshot date: July 22, 2026</p>
+
+    <div class="toolbar" data-toolbar>
+      <div class="toolbar-group">
+        <button class="secondary" type="button">Last 30 days</button>
+        <button class="secondary" type="button">All regions</button>
+      </div>
+      <div class="toolbar-group">
+        <button class="secondary" type="button">Export</button>
+        <button type="button">Save view</button>
+      </div>
+    </div>
+
+    <section class="grid" aria-label="Key metrics">
+      <article class="metric" data-card="revenue">
+        <div class="metric-label">Monthly revenue</div>
+        <div class="metric-value" data-metric="revenue">$128,400</div>
+      </article>
+      <article class="metric" data-card="conversion">
+        <div class="metric-label">Conversion rate</div>
+        <div class="metric-value">4.8%</div>
+        <span class="status">On target</span>
+      </article>
+      <article class="metric" data-card="orders">
+        <div class="metric-label">Paid orders</div>
+        <div class="metric-value">1,284</div>
+      </article>
+    </section>
+
+    <section class="panel" style="margin-top: 1rem">
+      <h2>Saved view preferences</h2>
+      <p id="preference-summary">No migrated preferences loaded.</p>
+      <p id="migration-status" class="muted" aria-live="polite">No legacy state detected.</p>
+    </section>
+  </main>
+  <script>
+    const mode = location.pathname.endsWith("/candidate")
+      ? "candidate"
+      : "reference";
+    document.body.classList.add(mode);
+    document.body.dataset.mode = mode;
+
+    if (mode === "candidate") {
+      document.querySelector('[data-metric="revenue"]').textContent = "$128,040";
+    }
+
+    const legacyKey = "ego.benchmark.ui.v1";
+    const currentKey = "ego.benchmark.ui.v2";
+    const legacyText = localStorage.getItem(legacyKey);
+    if (legacyText) {
+      const legacy = JSON.parse(legacyText);
+      const migrated = mode === "reference"
+        ? {
+            version: 2,
+            appearance: {
+              theme: legacy.theme,
+              density: legacy.density,
+            },
+            filters: legacy.savedFilters,
+            migratedFrom: 1,
+          }
+        : {
+            version: 2,
+            appearance: {
+              theme: legacy.theme,
+              density: "comfortable",
+            },
+            filters: legacy.savedFilters,
+            migratedFrom: 1,
+          };
+      localStorage.setItem(currentKey, JSON.stringify(migrated));
+      if (mode === "reference") localStorage.removeItem(legacyKey);
+      document.querySelector("#preference-summary").textContent =
+        `${migrated.appearance.theme} / ${migrated.appearance.density} / ` +
+        `${migrated.filters.join(", ")}`;
+      document.querySelector("#migration-status").textContent =
+        "Legacy preferences migrated to schema v2.";
+    }
+  </script>
+</body>
+</html>

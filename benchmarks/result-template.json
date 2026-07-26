@@ -1,0 +1,22 @@
+{
+  "suiteVersion": "0.1",
+  "tool": "agent-browser-or-plugin-name",
+  "model": "model-name",
+  "mode": "cold",
+  "startedAt": "2026-01-01T00:00:00.000Z",
+  "cases": [
+    {
+      "id": "03-adaptive-branches",
+      "status": "pass",
+      "wallTimeMs": 0,
+      "humanWaitMs": 0,
+      "toolRoundTrips": 0,
+      "returnedBytes": 0,
+      "timeouts": 0,
+      "retries": 0,
+      "humanHandoffs": 0,
+      "answer": {}
+    }
+  ],
+  "notes": ""
+}
