@@ -1,0 +1,197 @@
+name: OpenThread public binary build
+
+on:
+  push:
+    branches:
+      - ot-public-binary-build-20260922
+    paths:
+      - .github/workflows/openthread-public-binaries.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-public-components:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    steps:
+      - name: Check out build host repository
+        uses: actions/checkout@v4
+
+      - name: Check out exact OTBR revision
+        uses: actions/checkout@v4
+        with:
+          repository: openthread/ot-br-posix
+          ref: ead10d1a12d9ed4aec6f4a857e5668d3561104ae
+          fetch-depth: 1
+          submodules: recursive
+          path: otbr
+          persist-credentials: false
+
+      - name: Pin exact OpenThread revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          commit=e04ff192755a22b36825e3411c6a4d02e26a2860
+          git -C otbr/third_party/openthread/repo fetch --depth 1 origin "$commit"
+          git -C otbr/third_party/openthread/repo checkout --detach "$commit"
+          git -C otbr/third_party/openthread/repo submodule update --init --recursive --depth 1
+          test "$(git -C otbr/third_party/openthread/repo rev-parse HEAD)" = "$commit"
+
+      - name: Check out exact OT Commissioner revision
+        uses: actions/checkout@v4
+        with:
+          repository: openthread/ot-commissioner
+          ref: 448f807e3246c46e5b82e4cdc12a9b0fb2a646ae
+          fetch-depth: 1
+          submodules: recursive
+          path: commissioner
+          persist-credentials: false
+
+      - name: Install public build dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build pkg-config \
+            iproute2 iputils-ping procps python3-pexpect \
+            ipset iptables lsb-base patch swig \
+            libjsoncpp-dev libmnl-dev libnftnl-dev \
+            libreadline-dev libncurses-dev
+
+      - name: Build official OT Commissioner CLI
+        working-directory: commissioner
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_STANDARD=11 \
+            -DCMAKE_CXX_STANDARD_REQUIRED=ON \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DOT_COMM_CCM=OFF \
+            -DOT_COMM_TEST=OFF \
+            -DOT_COMM_WARNING_AS_ERROR=OFF
+          cmake --build build --target commissioner-cli -j2
+          COMM="$(find build -type f -name commissioner-cli -perm -111 -print -quit)"
+          test -n "$COMM"
+          "$COMM" -v
+
+      - name: Build OTBR and simulation peers
+        working-directory: otbr
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S . -B build-otbr -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DBUILD_TESTING=OFF \
+            -DOTBR_DBUS=OFF \
+            -DOTBR_REST=OFF \
+            -DOTBR_WEB=OFF \
+            -DOTBR_BACKBONE_ROUTER=OFF \
+            -DOTBR_NAT64=OFF \
+            -DOTBR_TREL=OFF \
+            -DOTBR_DHCP6_PD=OFF \
+            -DOTBR_MDNS=openthread \
+            -DOTBR_VENDOR_NAME=OpenThreadTest \
+            -DOTBR_PRODUCT_NAME=BorderRouter \
+            -DOT_FIREWALL=ON
+          cmake --build build-otbr --target otbr-agent -j2
+
+          OT_CLEAN_INTERMEDIATES='' \
+          OT_CMAKE_NINJA_TARGET='ot-rcp ot-cli-ftd' \
+          OT_CMAKE_BUILD_DIR="$PWD/build-sim" \
+            third_party/openthread/repo/script/cmake-build simulation \
+              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+              -DOT_COVERAGE=OFF \
+              -DOT_LOG_LEVEL=INFO \
+              -DOT_JOINER=ON
+
+          grep -qE '^OT_FIREWALL:.*=ON$' build-otbr/CMakeCache.txt
+          grep -qE '^OT_JOINER:.*=ON$' build-sim/CMakeCache.txt
+
+      - name: Assemble relocatable public-source bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf bundle
+          mkdir -p bundle/bin bundle/tools bundle/lib bundle/scripts bundle/src bundle/meta
+
+          AGENT="$(find otbr/build-otbr -type f -name otbr-agent -perm -111 -print -quit)"
+          OTCTL="$(find otbr -type f -name ot-ctl -perm -111 -print -quit)"
+          RCP="$(find otbr/build-sim -type f -name ot-rcp -perm -111 -print -quit)"
+          CLI="$(find otbr/build-sim -type f -name ot-cli-ftd -perm -111 -print -quit)"
+          COMM="$(find commissioner/build -type f -name commissioner-cli -perm -111 -print -quit)"
+          test -n "$AGENT" && test -n "$OTCTL" && test -n "$RCP" && test -n "$CLI" && test -n "$COMM"
+
+          install -m755 "$AGENT" bundle/bin/otbr-agent
+          install -m755 "$OTCTL" bundle/bin/ot-ctl
+          install -m755 "$RCP" bundle/bin/ot-rcp
+          install -m755 "$CLI" bundle/bin/ot-cli-ftd
+          install -m755 "$COMM" bundle/bin/commissioner-cli
+          install -m755 otbr/script/otbr-firewall bundle/scripts/otbr-firewall
+
+          for tool in \
+            iptables iptables-save iptables-restore \
+            ip6tables ip6tables-save ip6tables-restore \
+            ipset; do
+            path="$(command -v "$tool" || true)"
+            if [ -n "$path" ]; then
+              install -m755 "$(readlink -f "$path")" "bundle/tools/$tool"
+            fi
+          done
+
+          copy_deps() {
+            local file="$1"
+            ldd "$file" | tee -a bundle/meta/ldd.txt
+            ldd "$file" | awk '/=> \/|^\// {for (i=1;i<=NF;i++) if ($i ~ /^\//) print $i}' \
+              | sort -u \
+              | while read -r lib; do
+                  [ -f "$lib" ] || continue
+                  cp -L "$lib" "bundle/lib/$(basename "$lib")"
+                done
+          }
+          : > bundle/meta/ldd.txt
+          for file in bundle/bin/* bundle/tools/*; do
+            copy_deps "$file" || true
+          done
+
+          tar -C otbr \
+            --exclude=.git \
+            --exclude=build-otbr \
+            --exclude=build-sim \
+            -czf bundle/src/otbr-source.tar.gz .
+          tar -C commissioner \
+            --exclude=.git \
+            --exclude=build \
+            -czf bundle/src/commissioner-source.tar.gz .
+
+          cp otbr/build-otbr/CMakeCache.txt bundle/meta/otbr-CMakeCache.txt
+          cp otbr/build-otbr/compile_commands.json bundle/meta/otbr-compile_commands.json
+          cp otbr/build-sim/CMakeCache.txt bundle/meta/sim-CMakeCache.txt
+          cp otbr/build-sim/compile_commands.json bundle/meta/sim-compile_commands.json
+
+          {
+            echo 'OpenThread=e04ff192755a22b36825e3411c6a4d02e26a2860'
+            echo 'OTBR=ead10d1a12d9ed4aec6f4a857e5668d3561104ae'
+            echo 'OTCommissioner=448f807e3246c46e5b82e4cdc12a9b0fb2a646ae'
+            echo 'OT_FIREWALL=ON'
+            echo 'OT_JOINER=ON'
+            uname -a
+            ldd --version | head -n1
+          } > bundle/meta/provenance.txt
+
+          find bundle -type f -print0 | sort -z | xargs -0 sha256sum > bundle/meta/MANIFEST.sha256
+          du -ah bundle | sort -h | tail -30
+
+      - name: Upload public component bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: openthread-public-components-e04ff
+          retention-days: 1
+          if-no-files-found: error
+          compression-level: 6
+          path: bundle/
