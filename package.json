@@ -1,6 +1,6 @@
 {
   "name": "windows-agent-browser",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Local-first Chrome and Edge browser automation for AI coding agents on Windows.",
   "type": "module",
   "bin": {

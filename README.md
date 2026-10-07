@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/Civitasmass/windows-agent-browser/main/docs/assets/windows-agent-browser-hero.png" alt="Windows Agent Browser connecting an AI coding agent to a visible browser through structured accessibility data" width="100%">
-</p>
-
 <h1 align="center">Windows Agent Browser</h1>
 
 <p align="center">
@@ -25,7 +21,9 @@
   <a href="SECURITY.md">Security</a>
 </p>
 
----
+<p align="center">
+  <img src="docs/assets/winbrowse-demo.gif" alt="An agent reads a Wikipedia accessibility snapshot, picks the searchbox ref @12, types Microsoft Edge, presses Enter, and reads the article title" width="100%">
+</p>
 
 Most agent browser tools are built for Linux, headless Chromium, or a cloud
 sandbox. On Windows that usually means fighting WSL paths, losing your logins,
