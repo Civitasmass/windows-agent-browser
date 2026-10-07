@@ -107,6 +107,7 @@ test("PowerShell skill installer targets Claude, Codex, and managed Claude paths
   const environment = {
     ...process.env,
     USERPROFILE: temporaryDirectory,
+    CLAUDE_CONFIG_DIR: "",
   };
   const runInstaller = () =>
     spawnSync(

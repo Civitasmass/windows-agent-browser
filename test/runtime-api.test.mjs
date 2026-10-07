@@ -249,6 +249,90 @@ test("concurrent first page commands share one attached session", async (t) => {
   );
 });
 
+test("page commands reuse the selected session while metadata stays fresh", async (t) => {
+  const config = await testConfig(t);
+  const client = new FakeCdpClient([target("first"), target("second")]);
+  const runtime = new BrowserRuntime(client, config);
+  await runtime.initialize();
+  await runtime.use("first");
+  client.calls.length = 0;
+
+  await runtime.sendPage("DOM.getDocument");
+  await runtime.bringToFront();
+  await runtime.sendPage("Page.getFrameTree");
+  assert.deepEqual(client.calls.map((call) => call.method), [
+    "DOM.getDocument",
+    "Page.bringToFront",
+    "Page.getFrameTree",
+  ]);
+  assert.ok(client.calls.every((call) => call.sessionId === "session-first"));
+
+  client.targets[0].url = "https://first.example.test/new";
+  assert.equal((await runtime.context()).target.url, client.targets[0].url);
+  await runtime.use("second");
+  await runtime.sendPage("DOM.getDocument");
+  assert.equal(client.calls.at(-1).sessionId, "session-second");
+});
+
+test("detached, destroyed and internal targets invalidate reused sessions", async (t) => {
+  const config = await testConfig(t);
+  const client = new FakeCdpClient([target("only")]);
+  const runtime = new BrowserRuntime(client, config);
+  const emit = (method, params) => {
+    for (const listener of client.listeners.get(method) ?? []) {
+      listener({ method, params });
+    }
+  };
+  await runtime.initialize();
+  await runtime.sendPage("DOM.getDocument");
+  client.calls.length = 0;
+
+  emit("Target.detachedFromTarget", { sessionId: "session-only" });
+  await runtime.sendPage("DOM.getDocument");
+  assert.equal(
+    client.calls.filter((call) => call.method === "Target.attachToTarget").length,
+    1,
+  );
+
+  client.targets[0].url = "chrome://settings/";
+  emit("Target.targetInfoChanged", { targetInfo: client.targets[0] });
+  client.calls.length = 0;
+  await assert.rejects(runtime.sendPage("DOM.getDocument"), { code: "NO_PAGE_TARGET" });
+  assert.equal(
+    client.calls.filter((call) => call.method === "DOM.getDocument").length,
+    0,
+  );
+
+  client.targets[0].url = "https://only.example.test/";
+  await runtime.sendPage("DOM.getDocument");
+  client.targets.length = 0;
+  emit("Target.targetDestroyed", { targetId: "only" });
+  await assert.rejects(runtime.sendPage("DOM.getDocument"), { code: "NO_PAGE_TARGET" });
+});
+
+test("failed page commands propagate without replaying input", async (t) => {
+  const config = await testConfig(t);
+  const client = new FakeCdpClient([target("only")]);
+  const runtime = new BrowserRuntime(client, config);
+  await runtime.initialize();
+  await runtime.sendPage("DOM.getDocument");
+  const send = client.send.bind(client);
+  let inputCalls = 0;
+  const failure = new Error("Connection lost after dispatch");
+  client.send = async (method, ...args) => {
+    if (method === "Input.dispatchMouseEvent") {
+      inputCalls += 1;
+      throw failure;
+    }
+    return send(method, ...args);
+  };
+  await assert.rejects(
+    runtime.sendPage("Input.dispatchMouseEvent", { type: "mouseReleased" }),
+    (error) => error === failure,
+  );
+  assert.equal(inputCalls, 1);
+});
+
 class FakeApiRuntime {
   calls = [];
   targetId = "target-a";

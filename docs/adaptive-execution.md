@@ -64,8 +64,11 @@ reasoning in the agent and make deterministic browser state cheap to test.
 - `page.setInputFiles` covers direct top-level file inputs with validated local
   paths.
 - `page.setViewport` makes responsive UI checks deterministic.
-- The skill now includes the compact API signatures, so ordinary sessions do
-  not need to load the full API reference mechanically.
+- The skill exposes observed CSS targets, visual coordinate clicks, function
+  evaluation and result-only output; API details load only when needed.
+- Page commands reuse the selected CDP session instead of listing all targets
+  before every command. Detach, destroy and internal-target events invalidate
+  it; tab selection and metadata reads still refresh their data.
 - The benchmark suite reports cold schema/skill overhead separately from warm
   task execution.
 

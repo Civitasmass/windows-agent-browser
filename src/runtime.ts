@@ -77,6 +77,21 @@ export class BrowserRuntime {
         }
       },
     );
+    this.client.on<{ targetInfo?: TargetInfo }>(
+      "Target.targetInfoChanged",
+      (event) => {
+        const target = event.params?.targetInfo;
+        if (
+          target &&
+          (target.type !== "page" ||
+            INTERNAL_URL_PREFIXES.some((prefix) =>
+              (target.url || "").startsWith(prefix),
+            ))
+        ) {
+          this.sessions.delete(target.targetId);
+        }
+      },
+    );
     this.activeTargetId = await this.readActiveTarget();
     const tabs = await this.tabs();
     if (
@@ -243,7 +258,12 @@ export class BrowserRuntime {
     method: string,
     params: CdpParams = {},
   ): Promise<T> {
-    const { sessionId } = await this.context();
+    // Reuse the selected session between commands. Target events above
+    // invalidate it; context() still refreshes metadata when requested.
+    const cached = this.activeTargetId
+      ? this.sessions.get(this.activeTargetId)
+      : undefined;
+    const sessionId = cached ?? (await this.context()).sessionId;
     return this.client.send<T>(method, params, sessionId);
   }
 
@@ -260,8 +280,7 @@ export class BrowserRuntime {
    * browser window, which is required before dispatching reliable input.
    */
   async bringToFront(): Promise<void> {
-    const { sessionId } = await this.context();
-    await this.client.send("Page.bringToFront", {}, sessionId);
+    await this.sendPage("Page.bringToFront");
   }
 
   async evaluate<T = unknown>(
