@@ -74,8 +74,8 @@ Write-Host "This installer does not read or copy your default Chrome profile."
 Write-Host "If the dedicated browser is already open, close it once so updated launch flags take effect."
 Write-Host ""
 Write-Host "Next steps:"
-Write-Host "  agent-browser --doctor"
-Write-Host "  agent-browser launch"
+Write-Host "  winbrowse --doctor"
+Write-Host "  winbrowse launch"
 if (-not $SkipAgentSkills) {
-    Write-Host "  Restart Claude Code or Codex, then invoke agent-browser-windows."
+    Write-Host "  Restart Claude Code or Codex, then invoke winbrowse."
 }

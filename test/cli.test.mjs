@@ -25,7 +25,7 @@ test("CLI help is available without starting or configuring a browser", () => {
     assert.equal(exitCode, 0);
     assert.equal(stderr.value, "");
     assert.match(stdout.value, /^Windows Agent Browser$/mu);
-    assert.match(stdout.value, /agent-browser nodejs/u);
+    assert.match(stdout.value, /winbrowse nodejs/u);
     assert.match(stdout.value, /AGENT_BROWSER_PROFILE/u);
   });
 });
@@ -59,7 +59,7 @@ test("the npm bin entrypoint executes instead of behaving like an import", async
     await readFile(new URL("../package.json", import.meta.url), "utf8"),
   );
   assert.equal(
-    packageJson.bin["agent-browser"],
+    packageJson.bin["winbrowse"],
     "./dist/bin.js",
   );
 

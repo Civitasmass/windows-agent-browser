@@ -14,7 +14,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$SkillSource = Join-Path $ProjectRoot "skills\agent-browser-windows"
+$SkillSource = Join-Path $ProjectRoot "skills\winbrowse"
 $SkillEntry = Join-Path $SkillSource "SKILL.md"
 $MarkerName = ".installed-by-windows-agent-browser"
 
@@ -36,7 +36,7 @@ if ($Scope -eq "ClaudeManaged") {
     }
     $Destinations += [pscustomobject]@{
         Name = "Claude Code managed"
-        Path = Join-Path $env:ProgramFiles "ClaudeCode\.claude\skills\agent-browser-windows"
+        Path = Join-Path $env:ProgramFiles "ClaudeCode\.claude\skills\winbrowse"
     }
 }
 else {
@@ -69,14 +69,14 @@ else {
             $SeenClaudeRoots[$ClaudeRootKey] = $true
             $Destinations += [pscustomobject]@{
                 Name = "Claude Code user ($(Split-Path -Leaf $ClaudeRoot))"
-                Path = Join-Path $ClaudeRoot "skills\agent-browser-windows"
+                Path = Join-Path $ClaudeRoot "skills\winbrowse"
             }
         }
     }
     if ($Target -eq "All" -or $Target -eq "Codex") {
         $Destinations += [pscustomobject]@{
             Name = "Codex user"
-            Path = Join-Path $env:USERPROFILE ".agents\skills\agent-browser-windows"
+            Path = Join-Path $env:USERPROFILE ".agents\skills\winbrowse"
         }
     }
 }

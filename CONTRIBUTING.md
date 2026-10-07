@@ -22,7 +22,7 @@ more useful than broad abstractions or premature compatibility layers.
 - npm
 
 Run the supported browser launcher with Windows Node. From WSL, use
-`bash scripts/agent-browser-wsl` to invoke the built Windows runtime rather than
+`bash scripts/winbrowse-wsl` to invoke the built Windows runtime rather than
 running `dist/bin.js` with Linux Node. The bridge is not a sandbox and does not
 reduce the submitted program's Windows permissions. Profile, home, and
 executable overrides passed through the bridge must remain Windows-style paths,
@@ -142,7 +142,7 @@ For any public change:
 - document exact arguments, units, return values, and error behavior;
 - keep examples executable against the current implementation;
 - add JSDoc or types at the source boundary;
-- update `skills/agent-browser-windows/references/api.md`;
+- update `skills/winbrowse/references/api.md`;
 - avoid imitating a Playwright method unless its semantics truly match.
 
 Temporary snapshot references are part of the safety model. Changes must retain

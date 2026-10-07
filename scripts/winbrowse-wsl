@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-windows_command=${AGENT_BROWSER_WINDOWS_CMD:-agent-browser.cmd}
+windows_command=${AGENT_BROWSER_WINDOWS_CMD:-winbrowse.cmd}
 
 if [[ -z "$windows_command" ]]; then
-  echo "agent-browser-wsl: AGENT_BROWSER_WINDOWS_CMD must not be empty." >&2
+  echo "winbrowse-wsl: AGENT_BROWSER_WINDOWS_CMD must not be empty." >&2
   exit 2
 fi
 
@@ -20,19 +20,19 @@ has_cmd_metacharacter() {
 }
 
 if has_cmd_metacharacter "$windows_command"; then
-  echo "agent-browser-wsl: AGENT_BROWSER_WINDOWS_CMD contains a character that is unsafe for cmd.exe." >&2
+  echo "winbrowse-wsl: AGENT_BROWSER_WINDOWS_CMD contains a character that is unsafe for cmd.exe." >&2
   exit 2
 fi
 
 for argument in "$@"; do
   if has_cmd_metacharacter "$argument"; then
-    echo "agent-browser-wsl: an argument contains a character that is unsafe for cmd.exe." >&2
+    echo "winbrowse-wsl: an argument contains a character that is unsafe for cmd.exe." >&2
     exit 2
   fi
 done
 
 if ! command -v cmd.exe >/dev/null 2>&1; then
-  echo "agent-browser-wsl: cmd.exe was not found. Run this script from WSL with Windows interoperability enabled." >&2
+  echo "winbrowse-wsl: cmd.exe was not found. Run this script from WSL with Windows interoperability enabled." >&2
   exit 127
 fi
 

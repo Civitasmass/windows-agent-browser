@@ -1,7 +1,7 @@
 # Agent setup
 
 The repository keeps one concise Agent Skill at
-`skills/agent-browser-windows/`. Installers copy that same source into each
+`skills/winbrowse/`. Installers copy that same source into each
 agent's supported discovery directory; there are no separate Claude and Codex
 instruction forks. The paths follow the current
 [Claude Code skill discovery](https://code.claude.com/docs/en/skills#where-skills-live)
@@ -12,11 +12,11 @@ documentation.
 
 | Agent environment | Skill destination | Browser command |
 | --- | --- | --- |
-| Claude Code, native Windows | `%USERPROFILE%\.claude\skills\agent-browser-windows` | `agent-browser.cmd` |
-| Claude Code, native Windows, managed company deployment | `C:\Program Files\ClaudeCode\.claude\skills\agent-browser-windows` | `agent-browser.cmd` |
-| Codex, native Windows | `%USERPROFILE%\.agents\skills\agent-browser-windows` | `agent-browser.cmd` |
-| Codex in WSL | `~/.agents/skills/agent-browser-windows` | `~/.local/bin/agent-browser` |
-| Claude Code in WSL, optional | `~/.claude/skills/agent-browser-windows` | `~/.local/bin/agent-browser` |
+| Claude Code, native Windows | `%USERPROFILE%\.claude\skills\winbrowse` | `winbrowse.cmd` |
+| Claude Code, native Windows, managed company deployment | `C:\Program Files\ClaudeCode\.claude\skills\winbrowse` | `winbrowse.cmd` |
+| Codex, native Windows | `%USERPROFILE%\.agents\skills\winbrowse` | `winbrowse.cmd` |
+| Codex in WSL | `~/.agents/skills/winbrowse` | `~/.local/bin/winbrowse` |
+| Claude Code in WSL, optional | `~/.claude/skills/winbrowse` | `~/.local/bin/winbrowse` |
 
 Native Windows and WSL have different home directories and do not share their
 skill installation. Install both rows if you use Codex in both environments.
@@ -69,7 +69,7 @@ skill from an elevated Windows PowerShell:
 This writes only the skill under Claude Code's managed policy directory. It
 does not edit `managed-settings.json`, registry policy, permission allowlists,
 or plugin policy. IT must separately decide whether the local
-`agent-browser.cmd` command and the dedicated browser profile are permitted.
+`winbrowse.cmd` command and the dedicated browser profile are permitted.
 Do not solve a company-policy denial with broad shell allow rules.
 
 Use a company-approved dedicated profile for company work. Do not share that
@@ -82,14 +82,14 @@ of asking users to bypass that policy.
 
 ## Codex in WSL
 
-First run the Windows installer so `agent-browser.cmd` exists on the Windows
+First run the Windows installer so `winbrowse.cmd` exists on the Windows
 `PATH`. Then, from WSL:
 
 ```bash
 bash scripts/install-wsl.sh
 ```
 
-This installs the WSL-to-Windows bridge as `~/.local/bin/agent-browser` and the
+This installs the WSL-to-Windows bridge as `~/.local/bin/winbrowse` and the
 Codex skill under `~/.agents/skills`. To install the optional Claude Code WSL
 skill too:
 
@@ -104,8 +104,8 @@ Linux Node.
 ## Verify discovery and browser access
 
 Close and reopen an agent after the first installation. Claude Code can invoke
-`/agent-browser-windows`; Codex can invoke
-`$agent-browser-windows` or find it through `/skills`.
+`/winbrowse`; Codex can invoke
+`$winbrowse` or find it through `/skills`.
 
 The browser bookkeeping contexts are deliberately different:
 
@@ -118,21 +118,21 @@ The browser bookkeeping contexts are deliberately different:
 Verify the transport outside the agent:
 
 ```powershell
-agent-browser.cmd launch
-agent-browser.cmd --doctor
+winbrowse.cmd launch
+winbrowse.cmd --doctor
 ```
 
 Or from WSL:
 
 ```bash
-agent-browser launch
-agent-browser --doctor
+winbrowse launch
+winbrowse --doctor
 ```
 
 Then give the agent a read-only smoke task:
 
 ```text
-Use agent-browser-windows. Inspect the dedicated browser's tabs and snapshot
+Use winbrowse. Inspect the dedicated browser's tabs and snapshot
 example.com. Do not change page or remote state.
 ```
 

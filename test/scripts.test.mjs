@@ -20,7 +20,7 @@ const skillInstallerUrl = new URL(
   import.meta.url,
 );
 const skillInstallerPath = fileURLToPath(skillInstallerUrl);
-const wrapperUrl = new URL("../scripts/agent-browser-wsl", import.meta.url);
+const wrapperUrl = new URL("../scripts/winbrowse-wsl", import.meta.url);
 const wrapperPath = fileURLToPath(wrapperUrl);
 const wslInstallerUrl = new URL(
   "../scripts/install-wsl.sh",
@@ -28,7 +28,7 @@ const wslInstallerUrl = new URL(
 );
 const wslInstallerPath = fileURLToPath(wslInstallerUrl);
 const skillUrl = new URL(
-  "../skills/agent-browser-windows/SKILL.md",
+  "../skills/winbrowse/SKILL.md",
   import.meta.url,
 );
 const occluderUrl = new URL(
@@ -61,8 +61,8 @@ test("PowerShell installer checks Node 22 and installs this project globally", a
   assert.match(source, /\[switch\]\$SkipAgentSkills/u);
   assert.match(source, /install-agent-skills\.ps1/u);
   assert.match(source, /-Target All -Scope User/u);
-  assert.match(source, /agent-browser --doctor/u);
-  assert.match(source, /agent-browser launch/u);
+  assert.match(source, /winbrowse --doctor/u);
+  assert.match(source, /winbrowse launch/u);
   assert.match(source, /updated launch flags take effect/u);
 
   assert.doesNotMatch(source, /\b(?:Copy-Item|xcopy|robocopy)\b/iu);
@@ -77,11 +77,11 @@ test("PowerShell skill installer targets Claude, Codex, and managed Claude paths
   assert.match(source, /ClaudeConfigDir/u);
   assert.match(
     source,
-    /\.agents\\skills\\agent-browser-windows/u,
+    /\.agents\\skills\\winbrowse/u,
   );
   assert.match(
     source,
-    /ClaudeCode\\\.claude\\skills\\agent-browser-windows/u,
+    /ClaudeCode\\\.claude\\skills\\winbrowse/u,
   );
   assert.match(source, /ClaudeManaged scope requires -Target Claude/u);
   assert.match(source, /Refusing to overwrite an unowned skill directory/u);
@@ -101,7 +101,7 @@ test("PowerShell skill installer targets Claude, Codex, and managed Claude paths
   }
 
   const temporaryDirectory = await mkdtemp(
-    join(tmpdir(), "agent-browser-windows-skills-test-"),
+    join(tmpdir(), "winbrowse-skills-test-"),
   );
   t.after(() => rm(temporaryDirectory, { recursive: true, force: true }));
   const environment = {
@@ -137,13 +137,13 @@ test("PowerShell skill installer targets Claude, Codex, and managed Claude paths
       temporaryDirectory,
       ".claude",
       "skills",
-      "agent-browser-windows",
+      "winbrowse",
     ),
     join(
       temporaryDirectory,
       ".agents",
       "skills",
-      "agent-browser-windows",
+      "winbrowse",
     ),
   ]) {
     assert.equal(
@@ -169,8 +169,8 @@ test("shared skill stays concise and documents both shell transports", async () 
     Buffer.byteLength(source, "utf8") < 5_000,
     "SKILL.md should keep setup detail in separate documentation",
   );
-  assert.match(source, /agent-browser\.cmd/u);
-  assert.match(source, /agent-browser <<'JS'/u);
+  assert.match(source, /winbrowse\.cmd/u);
+  assert.match(source, /winbrowse <<'JS'/u);
   assert.match(source, /AGENT_BROWSER_CONTEXT/u);
   assert.match(source, /references\/api\.md/u);
   assert.doesNotMatch(source, /npm install|Program Files\\ClaudeCode/iu);
@@ -219,7 +219,7 @@ test("WSL wrapper has valid Bash syntax and keeps arguments safely separated", a
   }
   assert.match(
     source,
-    /windows_command=\$\{AGENT_BROWSER_WINDOWS_CMD:-agent-browser\.cmd\}/u,
+    /windows_command=\$\{AGENT_BROWSER_WINDOWS_CMD:-winbrowse\.cmd\}/u,
   );
   assert.match(
     source,
@@ -242,10 +242,10 @@ test("WSL wrapper has valid Bash syntax and keeps arguments safely separated", a
 
 test("WSL installer adds the bridge and shared skills without touching shell profiles", async (t) => {
   const source = await readFile(wslInstallerUrl, "utf8");
-  assert.match(source, /\.agents\/skills\/agent-browser-windows/u);
-  assert.match(source, /\.claude\/skills\/agent-browser-windows/u);
+  assert.match(source, /\.agents\/skills\/winbrowse/u);
+  assert.match(source, /\.claude\/skills\/winbrowse/u);
   assert.match(source, /bin_dir="\$HOME\/\.local\/bin"/u);
-  assert.match(source, /bridge_destination="\$bin_dir\/agent-browser"/u);
+  assert.match(source, /bridge_destination="\$bin_dir\/winbrowse"/u);
   assert.match(source, /refusing to overwrite unowned/u);
   assert.match(source, /refusing to update a symlink/u);
   assert.doesNotMatch(source, /\b(?:sudo|eval)\b/u);
@@ -263,7 +263,7 @@ test("WSL installer adds the bridge and shared skills without touching shell pro
   assert.ifError(bash.error);
 
   const temporaryHome = await mkdtemp(
-    join(tmpdir(), "agent-browser-wsl-install-test-"),
+    join(tmpdir(), "winbrowse-wsl-install-test-"),
   );
   t.after(() => rm(temporaryHome, { recursive: true, force: true }));
   const environment = {
@@ -288,13 +288,13 @@ test("WSL installer adds the bridge and shared skills without touching shell pro
       temporaryHome,
       ".agents",
       "skills",
-      "agent-browser-windows",
+      "winbrowse",
     ),
     join(
       temporaryHome,
       ".claude",
       "skills",
-      "agent-browser-windows",
+      "winbrowse",
     ),
   ]) {
     assert.equal(
@@ -306,7 +306,7 @@ test("WSL installer adds the bridge and shared skills without touching shell pro
     temporaryHome,
     ".local",
     "bin",
-    "agent-browser",
+    "winbrowse",
   );
   assert.equal(
     await readFile(installedBridge, "utf8"),
@@ -319,7 +319,7 @@ test("WSL installer adds the bridge and shared skills without touching shell pro
     conflictingHome,
     ".local",
     "bin",
-    "agent-browser",
+    "winbrowse",
   );
   await mkdir(join(conflictingHome, ".local", "bin"), {
     recursive: true,
@@ -353,7 +353,7 @@ test("WSL wrapper preserves stdin, argv, and browser environment with a fake cmd
   assert.ifError(bash.error);
 
   const temporaryDirectory = await mkdtemp(
-    join(tmpdir(), "agent-browser-wsl-test-"),
+    join(tmpdir(), "winbrowse-wsl-test-"),
   );
   t.after(() => rm(temporaryDirectory, { recursive: true, force: true }));
 
@@ -378,11 +378,11 @@ cat > "$WRAPPER_CAPTURE_STDIN"
       ...process.env,
       PATH: `${temporaryDirectory}:${process.env.PATH ?? ""}`,
       WSLENV: "EXISTING/u:AGENT_BROWSER_CONTEXT/u",
-      AGENT_BROWSER_WINDOWS_CMD: String.raw`C:\Tools\agent-browser.cmd`,
+      AGENT_BROWSER_WINDOWS_CMD: String.raw`C:\Tools\winbrowse.cmd`,
       AGENT_BROWSER_CONTEXT: "codex",
       AGENT_BROWSER_CHROME: String.raw`C:\Program Files\Chrome\chrome.exe`,
-      AGENT_BROWSER_HOME: String.raw`D:\agent-browser`,
-      AGENT_BROWSER_PROFILE: String.raw`D:\agent-browser\profiles\codex`,
+      AGENT_BROWSER_HOME: String.raw`D:\winbrowse`,
+      AGENT_BROWSER_PROFILE: String.raw`D:\winbrowse\profiles\codex`,
       WRAPPER_CAPTURE_ARGS: argsFile,
       WRAPPER_CAPTURE_ENV: environmentFile,
       WRAPPER_CAPTURE_STDIN: stdinFile,
@@ -397,7 +397,7 @@ cat > "$WRAPPER_CAPTURE_STDIN"
       "/d",
       "/s",
       "/c",
-      String.raw`C:\Tools\agent-browser.cmd`,
+      String.raw`C:\Tools\winbrowse.cmd`,
       "nodejs",
     ],
   );
@@ -427,14 +427,14 @@ test("quoted Bash heredoc preserves JavaScript backslashes byte for byte", async
   assert.ifError(bash.error);
 
   const temporaryDirectory = await mkdtemp(
-    join(tmpdir(), "agent-browser-heredoc-test-"),
+    join(tmpdir(), "winbrowse-heredoc-test-"),
   );
   t.after(() => rm(temporaryDirectory, { recursive: true, force: true }));
   const passthrough = join(temporaryDirectory, "passthrough.mjs");
   await writeFile(passthrough, "process.stdin.pipe(process.stdout);");
 
   const program = String.raw`const pattern = /\/adaptive\/result\//;
-const windowsPath = "C:\\Tools\\agent-browser.cmd";
+const windowsPath = "C:\\Tools\\winbrowse.cmd";
 `;
   const quoteForBash = (value) =>
     `'${value.replaceAll("'", String.raw`'\''`)}'`;

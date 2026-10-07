@@ -4,7 +4,7 @@
   "description": "Local-first Chrome and Edge browser automation for AI coding agents on Windows.",
   "type": "module",
   "bin": {
-    "agent-browser": "./dist/bin.js"
+    "winbrowse": "./dist/bin.js"
   },
   "files": [
     "benchmarks",
@@ -32,7 +32,7 @@
   },
   "keywords": [
     "ai-agents",
-    "agent-browser",
+    "winbrowse",
     "browser",
     "browser-automation",
     "cdp",

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Windows Agent Browser"
+  short_description: "Control a dedicated Windows browser with compact scripts"
+  default_prompt: "Use $winbrowse to complete this web task in my dedicated Windows browser, using DOM or visual controls as appropriate."

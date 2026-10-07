@@ -9,15 +9,15 @@ import { executeScript } from "./executor.js";
 export const HELP = `Windows Agent Browser
 
 Usage:
-  agent-browser <<'JS'
+  winbrowse <<'JS'
   await browser.open('https://example.com')
   console.log(await page.snapshot())
   JS
 
-  agent-browser nodejs <<'JS'   Alias for stdin script execution
-  agent-browser launch          Start or reuse the dedicated browser
-  agent-browser --doctor        Inspect configuration and connection state
-  agent-browser --help
+  winbrowse nodejs <<'JS'   Alias for stdin script execution
+  winbrowse launch          Start or reuse the dedicated browser
+  winbrowse --doctor        Inspect configuration and connection state
+  winbrowse --help
 
 Environment:
   AGENT_BROWSER_CHROME          Chrome/Edge executable path

@@ -50,7 +50,7 @@ export async function acquireContextLease(
     if ((error as NodeJS.ErrnoException).code === "EADDRINUSE") {
       throw new AgentBrowserError(
         "AGENT_CONTEXT_BUSY",
-        `Another agent-browser program is already using context ${JSON.stringify(config.contextName)}. Wait for it to finish or use a different AGENT_BROWSER_CONTEXT.`,
+        `Another winbrowse program is already using context ${JSON.stringify(config.contextName)}. Wait for it to finish or use a different AGENT_BROWSER_CONTEXT.`,
         { cause: error },
       );
     }

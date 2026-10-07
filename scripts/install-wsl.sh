@@ -37,8 +37,8 @@ fi
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 project_root=$(cd -- "$script_dir/.." && pwd)
-skill_source="$project_root/skills/agent-browser-windows"
-bridge_source="$script_dir/agent-browser-wsl"
+skill_source="$project_root/skills/winbrowse"
+bridge_source="$script_dir/winbrowse-wsl"
 marker_name=.installed-by-windows-agent-browser
 
 if [[ ! -f "$skill_source/SKILL.md" || ! -f "$bridge_source" ]]; then
@@ -73,8 +73,8 @@ install_skill() {
 }
 
 bin_dir="$HOME/.local/bin"
-bridge_destination="$bin_dir/agent-browser"
-bridge_marker="$bin_dir/.agent-browser-installed-by-windows-agent-browser"
+bridge_destination="$bin_dir/winbrowse"
+bridge_marker="$bin_dir/.winbrowse-installed-by-windows-agent-browser"
 
 if [[ -L "$bridge_destination" ]]; then
   echo "install-wsl.sh: refusing to update a symlink command: $bridge_destination" >&2
@@ -90,9 +90,9 @@ mkdir -p -- "$bin_dir"
 printf '%s\n' windows-agent-browser > "$bridge_marker"
 install -m 0755 -- "$bridge_source" "$bridge_destination"
 
-install_skill "Codex user" "$HOME/.agents/skills/agent-browser-windows"
+install_skill "Codex user" "$HOME/.agents/skills/winbrowse"
 if [[ "$install_claude" == true ]]; then
-  install_skill "Claude Code user" "$HOME/.claude/skills/agent-browser-windows"
+  install_skill "Claude Code user" "$HOME/.claude/skills/winbrowse"
 fi
 
 echo "Installed WSL bridge:"
@@ -100,4 +100,4 @@ echo "  $bridge_destination"
 if [[ ":${PATH-}:" != *":$bin_dir:"* ]]; then
   echo "Add $bin_dir to PATH before starting Codex or Claude Code."
 fi
-echo "Windows agent-browser.cmd must already be installed on the Windows PATH."
+echo "Windows winbrowse.cmd must already be installed on the Windows PATH."

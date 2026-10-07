@@ -53,8 +53,8 @@ In Windows PowerShell:
 ```powershell
 git clone https://github.com/Civitasmass/windows-agent-browser.git
 cd windows-agent-browser
-.\scripts\install.ps1          # installs the CLI + the Agent Skill for Claude Code and Codex
-agent-browser.cmd launch       # opens the dedicated browser; sign in to sites here once
+.\scripts\install.ps1   # installs the winbrowse CLI + Agent Skill for Claude Code and Codex
+winbrowse.cmd launch    # opens the dedicated browser; sign in to sites here once
 ```
 
 Then ask your agent to use it, or try it yourself:
@@ -63,7 +63,7 @@ Then ask your agent to use it, or try it yourself:
 @'
 await browser.open("https://example.com");
 console.log(await page.snapshot());
-'@ | agent-browser.cmd
+'@ | winbrowse.cmd
 ```
 
 ```text
@@ -78,20 +78,20 @@ Act on a ref in the next call — `await page.click("@2")` — and snapshot agai
 
 > [!TIP]
 > From WSL, also run `bash scripts/install-wsl.sh`, then use the same commands
-> with a heredoc: `agent-browser <<'JS' ... JS`.
+> with a heredoc: `winbrowse <<'JS' ... JS`.
 > Requirements: Windows 10/11, Windows Node.js 22+, Chrome or Edge.
 
 ## Use it from Claude Code or Codex
 
 The installers put one shared skill,
-[`agent-browser-windows`](skills/agent-browser-windows/SKILL.md), where each
+[`winbrowse`](skills/winbrowse/SKILL.md), where each
 agent discovers it:
 
 | Agent | Skill location |
 | --- | --- |
-| Claude Code on Windows | `%USERPROFILE%\.claude\skills\agent-browser-windows` |
-| Codex on Windows | `%USERPROFILE%\.agents\skills\agent-browser-windows` |
-| Codex in WSL | `~/.agents/skills/agent-browser-windows` |
+| Claude Code on Windows | `%USERPROFILE%\.claude\skills\winbrowse` |
+| Codex on Windows | `%USERPROFILE%\.agents\skills\winbrowse` |
+| Codex in WSL | `~/.agents/skills/winbrowse` |
 
 Give each agent its own `AGENT_BROWSER_CONTEXT` (e.g. `claude`, `codex`) so
 their selected tab and refs don't collide. Then just ask:
@@ -114,13 +114,13 @@ Each program gets `browser`, `page`, `cdp`, and `sleep`, with top-level `await`.
 | **Wait** | `page.waitForURL()` · `page.waitForAny([...])` · `{ waitForNavigation: true }` on click/press |
 | **Escape hatch** | `cdp("Domain.method", params)` — raw Chrome DevTools Protocol |
 
-Full reference: [`references/api.md`](skills/agent-browser-windows/references/api.md) ·
+Full reference: [`references/api.md`](skills/winbrowse/references/api.md) ·
 patterns and pitfalls: [`docs/usage.md`](docs/usage.md).
 
 ## How it works
 
 ```text
-agent ──JS on stdin──▶ agent-browser (Windows Node.js)
+agent ──JS on stdin──▶ winbrowse (Windows Node.js)
                             │  local CDP WebSocket
                             ▼
                   visible Chrome / Edge  +  dedicated profile

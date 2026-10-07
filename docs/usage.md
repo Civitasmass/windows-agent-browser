@@ -2,7 +2,7 @@
 
 Detailed reference for Windows Agent Browser. Start with the
 [README](../README.md) for the overview and quick start; the full helper API is
-in [`skills/agent-browser-windows/references/api.md`](../skills/agent-browser-windows/references/api.md).
+in [`skills/winbrowse/references/api.md`](../skills/winbrowse/references/api.md).
 
 - [Requirements](#requirements)
 - [Install](#install)
@@ -48,8 +48,8 @@ npm run check
 npm link
 ```
 
-`npm link` places `agent-browser` on your npm command path. If PowerShell
-blocks npm-generated `.ps1` shims, invoke `agent-browser.cmd` instead. You can
+`npm link` places `winbrowse` on your npm command path. If PowerShell
+blocks npm-generated `.ps1` shims, invoke `winbrowse.cmd` instead. You can
 always run the built CLI directly with `node .\dist\bin.js --help`.
 
 The project is distributed as source; a signed Windows installer is not part of
@@ -57,28 +57,28 @@ the MVP.
 
 ## Calling the Windows runtime from WSL
 
-Install from Windows PowerShell first so `agent-browser.cmd` is on the Windows
+Install from Windows PowerShell first so `winbrowse.cmd` is on the Windows
 `PATH`, then install the Codex WSL skill and bridge:
 
 ```bash
 bash scripts/install-wsl.sh
 ```
 
-The installed `~/.local/bin/agent-browser` wrapper crosses into the Windows
+The installed `~/.local/bin/winbrowse` wrapper crosses into the Windows
 runtime. It preserves standard input and safe arguments, and forwards
 `AGENT_BROWSER_CONTEXT`, `AGENT_BROWSER_CHROME`, `AGENT_BROWSER_HOME`, and
 `AGENT_BROWSER_PROFILE` through `WSLENV`.
 
 ```bash
-AGENT_BROWSER_CONTEXT=codex-wsl agent-browser --doctor
-AGENT_BROWSER_CONTEXT=codex-wsl agent-browser launch
+AGENT_BROWSER_CONTEXT=codex-wsl winbrowse --doctor
+AGENT_BROWSER_CONTEXT=codex-wsl winbrowse launch
 ```
 
 - Executable, home, and profile overrides must be Windows-style paths because
   Windows Node consumes them; the wrapper does not translate them. Do not pass
   `/mnt/c/...` paths.
 - `AGENT_BROWSER_WINDOWS_CMD` selects another installed Windows command, for
-  example `C:\Users\name\AppData\Roaming\npm\agent-browser.cmd`.
+  example `C:\Users\name\AppData\Roaming\npm\winbrowse.cmd`.
 - Arguments containing `cmd.exe` metacharacters are rejected rather than
   reinterpreted.
 - The wrapper is transport convenience, not a sandbox: the program still runs
@@ -89,9 +89,9 @@ AGENT_BROWSER_CONTEXT=codex-wsl agent-browser launch
 
 ```powershell
 $env:AGENT_BROWSER_CONTEXT = "codex"
-agent-browser.cmd --doctor   # read-only; reports executable, profile, connection
-agent-browser.cmd launch     # start or reuse the dedicated visible browser
-agent-browser.cmd --doctor   # verify the connection
+winbrowse.cmd --doctor   # read-only; reports executable, profile, connection
+winbrowse.cmd launch     # start or reuse the dedicated visible browser
+winbrowse.cmd --doctor   # verify the connection
 ```
 
 Before the first launch, `--doctor` can report `healthy: false` and exit with
@@ -121,7 +121,7 @@ launcher never guesses that a lock is stale.
 
 ```powershell
 $env:AGENT_BROWSER_CHROME = "C:\Program Files\Google\Chrome\Application\chrome.exe"
-agent-browser.cmd launch
+winbrowse.cmd launch
 ```
 
 ## Run one JavaScript program
@@ -140,7 +140,7 @@ PowerShell here-string:
 const tab = await browser.open("https://example.com");
 console.log({ targetId: tab.targetId });
 console.log(await page.snapshot());
-'@ | agent-browser.cmd
+'@ | winbrowse.cmd
 ```
 
 Bash heredoc — the quotes around `JS` matter. `<<'JS'` preserves backslashes
@@ -148,7 +148,7 @@ byte for byte; unquoted `<<JS` performs shell expansion and can rewrite
 regexes, template literals, and `\\`:
 
 ```bash
-agent-browser <<'JS'
+winbrowse <<'JS'
 console.log(await page.snapshot());
 JS
 ```
@@ -156,12 +156,12 @@ JS
 If a transport still mangles a complex program, feed a file instead:
 
 ```bash
-agent-browser < script.js
+winbrowse < script.js
 ```
 
 ```powershell
 $OutputEncoding = [System.Text.UTF8Encoding]::new($false)
-Get-Content -LiteralPath .\script.js -Raw -Encoding UTF8 | agent-browser.cmd
+Get-Content -LiteralPath .\script.js -Raw -Encoding UTF8 | winbrowse.cmd
 ```
 
 ## Inspect unfamiliar controls; batch known steps
@@ -177,7 +177,7 @@ unfamiliar:
    `browser.use(targetId)`, then use that ref.
 
 ```bash
-AGENT_BROWSER_CONTEXT=codex-wsl agent-browser <<'JS'
+AGENT_BROWSER_CONTEXT=codex-wsl winbrowse <<'JS'
 await browser.use("TARGET_ID_FROM_PREVIOUS_OUTPUT");
 await page.fill("@4", "agent-friendly browsers");
 await page.press("Enter", { waitForNavigation: true, timeoutMs: 20_000 });
@@ -261,7 +261,7 @@ work. Do not extract credentials or unrelated profile data.
 | `AGENT_BROWSER_CHROME` | Explicit Chrome or Edge executable path |
 | `AGENT_BROWSER_HOME` | Root for managed state; default `%LOCALAPPDATA%\agent-browser` |
 | `AGENT_BROWSER_PROFILE` | Dedicated profile; default `%AGENT_BROWSER_HOME%\profile` |
-| `AGENT_BROWSER_WINDOWS_CMD` | WSL-wrapper command override; default `agent-browser.cmd` |
+| `AGENT_BROWSER_WINDOWS_CMD` | WSL-wrapper command override; default `winbrowse.cmd` |
 
 Paths may contain spaces. Context state lives under
 `%AGENT_BROWSER_HOME%\state\<context>`. Context names are 1–64 characters of
@@ -296,7 +296,7 @@ and verifies that a CDP click still lands:
 
 ```powershell
 Get-Content -LiteralPath .\test\fixtures\windows-smoke-occluded-click.js -Raw |
-  agent-browser.cmd
+  winbrowse.cmd
 ```
 
 Run it only on a disposable desktop session. The cover closes after eight

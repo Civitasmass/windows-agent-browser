@@ -1,6 +1,6 @@
 ---
-name: agent-browser-windows
-description: Control persistent Chrome or Edge on Windows 10/11 from WSL or PowerShell. Use for web interaction, signed-in workflows, uploads, screenshots, and browser checks with agent-browser.
+name: winbrowse
+description: Control persistent Chrome or Edge on Windows 10/11 from WSL or PowerShell. Use for web interaction, signed-in workflows, uploads, screenshots, and browser checks with winbrowse.
 ---
 
 # Agent Browser Windows
@@ -16,7 +16,7 @@ route and does not limit a model's computer-control capabilities.
 WSL/Bash (quoted heredoc preserves JavaScript and Unicode):
 
 ```bash
-AGENT_BROWSER_CONTEXT=codex-wsl agent-browser <<'JS'
+AGENT_BROWSER_CONTEXT=codex-wsl winbrowse <<'JS'
 const tab = await browser.open("https://example.com");
 console.log({ targetId: tab.targetId });
 console.log(await page.snapshot());
@@ -30,7 +30,7 @@ $env:AGENT_BROWSER_CONTEXT = "codex"
 $OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 @'
 console.log(await browser.tabs());
-'@ | agent-browser.cmd
+'@ | winbrowse.cmd
 ```
 
 Use a stable context per caller: `codex-wsl`, `codex`, `claude`, or `claudep`.

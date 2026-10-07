@@ -28,17 +28,17 @@ Do not run concurrent scripts on the same context or manipulate another task's
 tabs. Different contexts still share cookies and storage.
 
 Windows 10/11 use the same Node 22+ and Chrome/Edge code path. WSL forwards stdin
-to Windows Node through `agent-browser.cmd`; it does not need Linux Chromium.
+to Windows Node through `winbrowse.cmd`; it does not need Linux Chromium.
 PowerShell 5.1 defaults to ASCII when piping text to native programs: set
 `$OutputEncoding = [System.Text.UTF8Encoding]::new($false)` before the pipe.
 For saved scripts use `Get-Content -LiteralPath .\task.js -Raw -Encoding UTF8 |
-agent-browser.cmd` with that encoding setting. In WSL, use a quoted heredoc or
-`agent-browser < task.js`. Relative file paths resolve from Windows Node's cwd;
+winbrowse.cmd` with that encoding setting. In WSL, use a quoted heredoc or
+`winbrowse < task.js`. Relative file paths resolve from Windows Node's cwd;
 use `wslpath -w` for a file under a mounted Windows drive.
 
-If the command fails to connect, run `agent-browser --doctor` once and address
+If the command fails to connect, run `winbrowse --doctor` once and address
 the reported cause. This reports configuration and probes CDP without opening
-a new browser. `agent-browser launch` starts/reuses the managed browser.
+a new browser. `winbrowse launch` starts/reuses the managed browser.
 
 ## Observe and interact
 
