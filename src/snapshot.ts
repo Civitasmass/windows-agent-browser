@@ -386,7 +386,12 @@ function indexTree(inputNodes: readonly AxNodeLike[]): {
     ) {
       throw new TypeError("Every AX node must have a non-empty string nodeId");
     }
-    if (nodes.has(node.nodeId)) {
+    const existing = nodes.get(node.nodeId);
+    if (existing !== undefined) {
+      // Chrome can report the same InlineTextBox twice in getFullAXTree.
+      if (JSON.stringify(existing) === JSON.stringify(node)) {
+        continue;
+      }
       throw new TypeError(`Duplicate AX nodeId: ${node.nodeId}`);
     }
     nodes.set(node.nodeId, node);
@@ -395,7 +400,7 @@ function indexTree(inputNodes: readonly AxNodeLike[]): {
 
   const children = new Map<string, string[]>();
   const parentByChild = new Map<string, string>();
-  for (const node of inputNodes) {
+  for (const node of nodes.values()) {
     const childIds: string[] = [];
     for (const childId of node.childIds ?? []) {
       if (!nodes.has(childId) || childIds.includes(childId)) {
@@ -409,7 +414,7 @@ function indexTree(inputNodes: readonly AxNodeLike[]): {
     children.set(node.nodeId, childIds);
   }
 
-  for (const node of inputNodes) {
+  for (const node of nodes.values()) {
     if (
       node.parentId === undefined ||
       !nodes.has(node.parentId) ||

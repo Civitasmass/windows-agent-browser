@@ -141,6 +141,28 @@ test("buildSnapshot flattens ignored containers and refs focusable generic nodes
   assert.equal(result.refs[0].backendNodeId, 88);
 });
 
+test("buildSnapshot skips identical duplicate AX nodes and rejects conflicting ones", () => {
+  const options = {
+    targetId: "target",
+    url: "about:blank",
+    title: "",
+    documentId: "doc-duplicates",
+    maxChars: 1_000,
+  };
+  const root = ax("root", "RootWebArea", "", { childIds: ["link", "box"] });
+  const link = ax("link", "link", "Next", { backendDOMNodeId: 9 });
+  const box = ax("box", "InlineTextBox", " · ", { parentId: "root" });
+
+  const result = buildSnapshot([root, link, box, { ...box }], options);
+  assert.match(result.content, /link @1 "Next"/u);
+  assert.equal(result.refs.length, 1);
+
+  assert.throws(
+    () => buildSnapshot([root, link, box, { ...box, name: { value: "x" } }], options),
+    /Duplicate AX nodeId: box/u,
+  );
+});
+
 test("buildSnapshot shows child-frame content without actionable refs", () => {
   const nodes = [
     ax("root", "RootWebArea", "", {
