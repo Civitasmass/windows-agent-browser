@@ -7,6 +7,7 @@
 
 <p align="center">
   <a href="https://github.com/Civitasmass/windows-agent-browser/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/Civitasmass/windows-agent-browser?style=flat&logo=github&color=6366f1"></a>
+  <a href="https://www.npmjs.com/package/windows-agent-browser"><img alt="npm version" src="https://img.shields.io/npm/v/windows-agent-browser?logo=npm&color=cb3837"></a>
   <img alt="Windows 10 and 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?logo=windows11&logoColor=white">
   <img alt="Node.js 22 or newer" src="https://img.shields.io/badge/Node.js-22%2B-339933?logo=nodedotjs&logoColor=white">
   <img alt="Zero runtime dependencies" src="https://img.shields.io/badge/runtime%20deps-0-10b981">
@@ -49,11 +50,12 @@ Edge window over the Chrome DevTools Protocol.
 In Windows PowerShell:
 
 ```powershell
-git clone https://github.com/Civitasmass/windows-agent-browser.git
-cd windows-agent-browser
-.\scripts\install.ps1   # installs the winbrowse CLI + Agent Skill for Claude Code and Codex
-winbrowse.cmd launch    # opens the dedicated browser; sign in to sites here once
+npm install -g windows-agent-browser
+& "$(npm root -g)\windows-agent-browser\scripts\install-agent-skills.ps1"   # Agent Skill for Claude Code + Codex
+winbrowse.cmd launch   # opens the dedicated browser; sign in to sites here once
 ```
+
+<sub>From source instead: `git clone https://github.com/Civitasmass/windows-agent-browser.git`, then `.\scripts\install.ps1`.</sub>
 
 Then ask your agent to use it, or try it yourself:
 
