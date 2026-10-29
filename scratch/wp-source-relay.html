@@ -1,0 +1,31 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>WP source relay</title>
+<style>
+html,body{margin:0;background:#fff;color:#111;font:16px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+#status{position:fixed;right:8px;top:8px;padding:4px 8px;background:#ffd;border:1px solid #aa8;z-index:2}
+pre{white-space:pre-wrap;word-break:break-word;margin:16px}
+</style>
+<div id="status">boot</div><pre id="out"></pre>
+<script>
+(async()=>{
+ const q=new URLSearchParams(location.search);
+ const file=q.get('file')||'main.php';
+ const start=Math.max(1,parseInt(q.get('start')||'1',10)||1);
+ const count=Math.max(1,Math.min(120,parseInt(q.get('count')||'70',10)||70));
+ const url='https://pluginprobe.com/plugins/agency-toolkit/1.0.40/raw/'+file.split('/').map(encodeURIComponent).join('/');
+ const s=document.getElementById('status'), out=document.getElementById('out');
+ try{
+   s.textContent='fetch '+file;
+   const r=await fetch(url,{cache:'no-store',mode:'cors'});
+   const t=await r.text();
+   const lines=t.replace(/\r\n?/g,'\n').split('\n');
+   const end=Math.min(lines.length,start+count-1);
+   out.textContent=lines.slice(start-1,end).map((x,i)=>String(start+i).padStart(4,' ')+'  '+x).join('\n');
+   s.textContent='OK '+r.status+' lines '+start+'-'+end+' / '+lines.length;
+   document.title='OK '+file+' '+start+'-'+end;
+ }catch(e){
+   s.textContent='ERR';out.textContent=String(e)+'\n'+url;document.title='ERR '+file;
+ }
+})();
+</script>
