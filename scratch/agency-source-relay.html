@@ -1,0 +1,30 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Agency Toolkit source relay</title>
+<style>
+html,body{margin:0;background:#fff;color:#111;font:15px/1.28 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+#status{padding:10px 14px;background:#eee;position:sticky;top:0;font-weight:700}
+pre{margin:0;padding:12px 16px;white-space:pre-wrap;word-break:break-word}
+.err{color:#a00}
+</style>
+<div id="status">loading</div><pre id="out"></pre>
+<script>
+(async()=>{
+ const q=new URLSearchParams(location.search);
+ const file=q.get('file')||'main.php';
+ const start=Math.max(1,parseInt(q.get('start')||'1',10)||1);
+ const count=Math.max(1,Math.min(160,parseInt(q.get('count')||'70',10)||70));
+ const raw='http://plugins.svn.wordpress.org/agency-toolkit/tags/1.0.40/'+file.split('/').map(encodeURIComponent).join('/');
+ const urls=['https://r.jina.ai/'+raw,'https://r.jina.ai/http://'+raw.replace(/^https?:\/\//,'')];
+ let text='',last='';
+ for(const u of urls){try{const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(r.status+' '+r.statusText);text=await r.text();if(text.length>20)break}catch(e){last+=String(e)+'\n'}}
+ if(!text){document.getElementById('status').textContent='ERROR '+file;document.getElementById('out').className='err';document.getElementById('out').textContent=last;return}
+ const marker='Markdown Content:';
+ const i=text.indexOf(marker);
+ if(i>=0)text=text.slice(i+marker.length).replace(/^\s+/,'');
+ const lines=text.replace(/\r/g,'').split('\n');
+ const slice=lines.slice(start-1,start-1+count);
+ document.getElementById('status').textContent=file+' lines '+start+'-'+(start+slice.length-1)+' / '+lines.length;
+ document.getElementById('out').textContent=slice.map((v,j)=>String(start+j).padStart(4,' ')+'  '+v).join('\n');
+})().catch(e=>{document.getElementById('status').textContent='ERROR';document.getElementById('out').textContent=String(e)})
+</script>
