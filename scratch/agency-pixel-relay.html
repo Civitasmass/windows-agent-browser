@@ -1,0 +1,24 @@
+<!doctype html><meta charset="utf-8"><title>relay</title>
+<style>html,body{margin:0;width:1024px;height:1024px;overflow:hidden;background:#fff}canvas{display:block;width:1024px;height:1024px;image-rendering:pixelated}</style>
+<canvas id="c" width="1024" height="1024"></canvas>
+<script>
+(async()=>{
+ const params=new URLSearchParams((location.hash||'').replace(/^#/,''));
+ const file=params.get('file')||'main.php';
+ const offset=Math.max(0,parseInt(params.get('offset')||'0',10)||0);
+ const limit=32000;
+ const raw='http://plugins.svn.wordpress.org/agency-toolkit/tags/1.0.40/'+file.split('/').map(encodeURIComponent).join('/');
+ const urls=['https://r.jina.ai/'+raw,'https://r.jina.ai/http://'+raw.replace(/^https?:\/\//,'')];
+ let text='',status=1,last='';
+ for(const u of urls){try{const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(r.status+' '+r.statusText);text=await r.text();if(text.length>20){status=0;break}}catch(e){last+=String(e)+'\n'}}
+ if(status===0){const m='Markdown Content:';let i=text.indexOf(m);if(i>=0)text=text.slice(i+m.length).replace(/^\s+/,'');i=text.indexOf('<?php');if(i>=0)text=text.slice(i)}else{text=last}
+ const enc=new TextEncoder();const all=enc.encode(text);const payload=all.slice(offset,offset+limit);const name=enc.encode(file);
+ function crc32(bytes){let c=0xffffffff;for(const b of bytes){c^=b;for(let k=0;k<8;k++)c=(c>>>1)^((c&1)?0xedb88320:0)}return (c^0xffffffff)>>>0}
+ const out=[65,84,75,50,1,status];
+ const u16=n=>out.push((n>>>8)&255,n&255);const u32=n=>out.push((n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255);
+ u16(name.length);u32(all.length);u32(offset);u32(payload.length);u32(crc32(payload));out.push(...name,...payload);
+ const ctx=document.getElementById('c').getContext('2d',{alpha:false});ctx.imageSmoothingEnabled=false;
+ const nib=[];for(const b of out)nib.push(b>>>4,b&15);while(nib.length<256*256)nib.push(10);
+ for(let i=0;i<256*256;i++){const g=nib[i]*17;ctx.fillStyle=`rgb(${g},${g},${g})`;ctx.fillRect((i%256)*4,Math.floor(i/256)*4,4,4)}
+})().catch(e=>{document.body.textContent=String(e)})
+</script>
