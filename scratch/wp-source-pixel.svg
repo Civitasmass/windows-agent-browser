@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
-<rect width="800" height="800" fill="rgb(170,170,170)"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="800" viewBox="0 0 640 800">
+<rect width="640" height="800" fill="rgb(170,170,170)"/>
 <script><![CDATA[
 (()=>{
 'use strict';
@@ -7,7 +7,7 @@ const NS='http://www.w3.org/2000/svg';
 const p=new URLSearchParams(location.search);
 const FILE=p.get('file')||'functions/users-summary.php';
 const OFFSET=Math.max(0,parseInt(p.get('offset')||'0',10)||0);
-const LIMIT=19800;
+const LIMIT=15900;
 const RAW='http://plugins.svn.wordpress.org/agency-toolkit/tags/1.0.40/'+FILE.split('/').map(encodeURIComponent).join('/');
 function crc32(bytes){let c=0xffffffff;for(const b of bytes){c^=b;for(let k=0;k<8;k++)c=(c>>>1)^((c&1)?0xedb88320:0)}return (c^0xffffffff)>>>0}
 function u16(a,n){a.push((n>>>8)&255,n&255)}
@@ -18,10 +18,10 @@ const urls=['https://r.jina.ai/'+RAW,'https://r.jina.ai/http://'+RAW.replace(/^h
 for(const u of urls){try{text=get(u);status=0;break}catch(e){errors+=u+' '+String(e)+'\n'}}
 if(status){text=errors}else{const m='Markdown Content:';let i=text.indexOf(m);if(i>=0)text=text.slice(i+m.length).replace(/^\s+/,'');i=text.indexOf('<?php');if(i>=0)text=text.slice(i)}
 const enc=new TextEncoder(),all=enc.encode(text),payload=all.slice(OFFSET,OFFSET+LIMIT),name=enc.encode(FILE);
-const out=[65,84,75,52,1,status];u16(out,name.length);u32(out,all.length);u32(out,OFFSET);u32(out,payload.length);u32(out,crc32(payload));out.push(...name,...payload);
-const nib=[];for(const b of out)nib.push(b>>>4,b&15);while(nib.length<200*200)nib.push(10);
+const out=[65,84,75,53,1,status];u16(out,name.length);u32(out,all.length);u32(out,OFFSET);u32(out,payload.length);u32(out,crc32(payload));out.push(...name,...payload);
+const nib=[];for(const b of out)nib.push(b>>>4,b&15);while(nib.length<160*200)nib.push(10);
 const old=document.getElementById('pixels');if(old)old.remove();const g=document.createElementNS(NS,'g');g.setAttribute('id','pixels');
-for(let i=0;i<200*200;i++){const v=nib[i]*17,r=document.createElementNS(NS,'rect');r.setAttribute('x',(i%200)*4);r.setAttribute('y',Math.floor(i/200)*4);r.setAttribute('width',4);r.setAttribute('height',4);r.setAttribute('fill','rgb('+v+','+v+','+v+')');g.appendChild(r)}
+for(let i=0;i<160*200;i++){const v=nib[i]*17,r=document.createElementNS(NS,'rect');r.setAttribute('x',(i%160)*4);r.setAttribute('y',Math.floor(i/160)*4);r.setAttribute('width',4);r.setAttribute('height',4);r.setAttribute('fill','rgb('+v+','+v+','+v+')');g.appendChild(r)}
 document.documentElement.appendChild(g);
 })();
 ]]></script>
