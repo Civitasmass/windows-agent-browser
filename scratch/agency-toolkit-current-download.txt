@@ -1,0 +1,2 @@
+Official WordPress.org Agency Toolkit 1.0.40 package:
+https://downloads.wordpress.org/plugin/agency-toolkit.1.0.40.zip
