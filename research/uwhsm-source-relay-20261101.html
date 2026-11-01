@@ -1,8 +1,8 @@
 <!doctype html>
 <meta charset="utf-8">
 <title>UWHSM source relay</title>
-<style>html,body{margin:0;background:#fff;overflow:hidden}canvas{display:block;width:1600px;height:900px;image-rendering:pixelated}</style>
-<canvas id="c" width="1600" height="900"></canvas>
+<style>html,body{margin:0;background:#fff;overflow:hidden}canvas{display:block;width:1280px;height:900px;image-rendering:pixelated}</style>
+<canvas id="c" width="1280" height="900"></canvas>
 <script>
 (async()=>{
   'use strict';
@@ -10,7 +10,7 @@
   const q=new URLSearchParams(rawParams);
   const path=(q.get('path')||'').replace(/^\/+/, '');
   const offset=Math.max(0,parseInt(q.get('offset')||'0',10)||0);
-  const limit=Math.min(7000,Math.max(1,parseInt(q.get('limit')||'7000',10)||7000));
+  const limit=Math.min(5500,Math.max(1,parseInt(q.get('limit')||'5500',10)||5500));
   const base='https://plugins.svn.wordpress.org/uwh-site-migrator/tags/2.5.0/';
   const target=base+path.split('/').map(encodeURIComponent).join('/');
   const enc=new TextEncoder();
@@ -20,8 +20,8 @@
   function render(status,text){
     const all=enc.encode(text), payload=all.slice(offset,offset+limit), name=enc.encode(path);
     const out=[85,87,72,49,1,status];u16(out,name.length);u32(out,all.length);u32(out,offset);u32(out,payload.length);u32(out,crc32(payload));out.push(...name,...payload);
-    const ctx=document.getElementById('c').getContext('2d',{alpha:false});ctx.imageSmoothingEnabled=false;ctx.fillStyle='#fff';ctx.fillRect(0,0,1600,900);
-    const cols=160,rows=90,cells=cols*rows,nibs=[];for(const b of out)nibs.push(b>>>4,b&15);while(nibs.length<cells)nibs.push(10);
+    const ctx=document.getElementById('c').getContext('2d',{alpha:false});ctx.imageSmoothingEnabled=false;ctx.fillStyle='#fff';ctx.fillRect(0,0,1280,900);
+    const cols=128,rows=90,cells=cols*rows,nibs=[];for(const b of out)nibs.push(b>>>4,b&15);while(nibs.length<cells)nibs.push(10);
     for(let i=0;i<cells;i++){const v=(nibs[i]||0)*17;ctx.fillStyle=`rgb(${v},${v},${v})`;ctx.fillRect((i%cols)*10,Math.floor(i/cols)*10,10,10)}
     document.title=`UWHSM ${status} ${all.length} ${offset} ${payload.length}`;
   }
