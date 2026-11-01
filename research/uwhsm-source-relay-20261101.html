@@ -4,7 +4,7 @@
 <style>html,body{margin:0;background:#fff;overflow:hidden}canvas{display:block;width:1280px;height:900px;image-rendering:pixelated}</style>
 <canvas id="c" width="1280" height="900"></canvas>
 <script>
-(async()=>{
+(()=>{
   'use strict';
   const rawParams=(location.hash && location.hash.length>1)?location.hash.slice(1):location.search.slice(1);
   const q=new URLSearchParams(rawParams);
@@ -25,23 +25,24 @@
     for(let i=0;i<cells;i++){const v=(nibs[i]||0)*17;ctx.fillStyle=`rgb(${v},${v},${v})`;ctx.fillRect((i%cols)*10,Math.floor(i/cols)*10,10,10)}
     document.title=`UWHSM ${status} ${all.length} ${offset} ${payload.length}`;
   }
-  render(2,'BOOT '+target);
+  function syncGet(url){
+    const x=new XMLHttpRequest();
+    x.open('GET',url,false);
+    x.send(null);
+    if(x.status>=200&&x.status<300&&x.responseText!==undefined&&x.responseText.length>0)return x.responseText;
+    throw new Error(`${x.status} ${x.statusText} ${(x.responseText||'').slice(0,200)}`);
+  }
   const candidates=[
-    target,
     'https://api.allorigins.win/raw?url='+encodeURIComponent(target),
     'https://corsproxy.io/?url='+encodeURIComponent(target),
     'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(target),
     'https://cors.isomorphic-git.org/'+target,
-    'https://r.jina.ai/http://'+target.replace(/^https?:\/\//,'')
+    'https://r.jina.ai/http://'+target.replace(/^https?:\/\//,''),
+    target
   ];
   let errors=[];
   for(const u of candidates){
-    try{
-      const r=await fetch(u,{cache:'no-store',redirect:'follow'});
-      const t=await r.text();
-      if(r.ok && t && t.length>0){render(0,t);return;}
-      errors.push(`${u}\nHTTP ${r.status} ${r.statusText}\n${t.slice(0,200)}`);
-    }catch(e){errors.push(`${u}\n${String(e)}`)}
+    try{render(0,syncGet(u));return;}catch(e){errors.push(`${u}\n${String(e)}`)}
   }
   render(1,errors.join('\n---\n'));
 })();
