@@ -21,7 +21,7 @@
   function u32(a,n){a.push((n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255)}
   function render(status,text){
     const all=enc.encode(text), payload=all.slice(offset,offset+limit), name=enc.encode(path+'#'+mode);
-    const out=[85,87,72,49,3,status];u16(out,name.length);u32(out,all.length);u32(out,offset);u32(out,payload.length);u32(out,crc32(payload));out.push(...name,...payload);
+    const out=[85,87,72,49,4,status];u16(out,name.length);u32(out,all.length);u32(out,offset);u32(out,payload.length);u32(out,crc32(payload));out.push(...name,...payload);
     const ctx=document.getElementById('c').getContext('2d',{alpha:false});ctx.imageSmoothingEnabled=false;ctx.fillStyle='#fff';ctx.fillRect(0,0,1280,900);
     const cols=128,rows=90,cells=cols*rows,nibs=[];for(const b of out)nibs.push(b>>>4,b&15);while(nibs.length<cells)nibs.push(10);
     for(let i=0;i<cells;i++){const v=(nibs[i]||0)*17;ctx.fillStyle=`rgb(${v},${v},${v})`;ctx.fillRect((i%cols)*10,Math.floor(i/cols)*10,10,10)}
@@ -37,6 +37,12 @@
     if(i>=0 && /^Title:/i.test(text.slice(0,Math.min(32,text.length)))) return text.slice(i+marker.length);
     return text;
   }
+  function functions(lines){
+    const starts=[];
+    const re=/^\s*(?:(?:public|protected|private)\s+)?(?:static\s+)?function\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/;
+    lines.forEach((line,i)=>{const m=line.match(re);if(m)starts.push({i,name:m[1]});});
+    return starts.map((x,k)=>({name:x.name,start:x.i,end:k+1<starts.length?starts[k+1].i:lines.length}));
+  }
   function transform(text){
     if('raw'===mode)return text;
     const lines=text.split(/\r?\n/);
@@ -46,11 +52,37 @@
     }
     if('grep'===mode){
       const needles=(q.get('needle')||'').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
-      const context=Math.max(0,Math.min(30,parseInt(q.get('context')||'5',10)||5));
+      const context=Math.max(0,Math.min(300,parseInt(q.get('context')||'5',10)||5));
       if(!needles.length)return '';
       const keep=new Set();
       lines.forEach((line,i)=>{const l=line.toLowerCase();if(needles.some(n=>l.includes(n))){for(let j=Math.max(0,i-context);j<=Math.min(lines.length-1,i+context);j++)keep.add(j);}});
       return [...keep].sort((a,b)=>a-b).map(i=>`${i+1}: ${lines[i]}`).join('\n');
+    }
+    if('hooks'===mode){
+      const re=/(?:add_action|add_filter|register_rest_route|wp_ajax|admin_post|nopriv|template_redirect|rest_api_init)/i;
+      return lines.map((line,i)=>re.test(line)?`${i+1}: ${line}`:'').filter(Boolean).join('\n');
+    }
+    if('func'===mode){
+      const wanted=(q.get('name')||'').toLowerCase();
+      const fn=functions(lines).find(x=>x.name.toLowerCase()===wanted);
+      if(!fn)return '';
+      return lines.slice(fn.start,fn.end).map((line,j)=>`${fn.start+j+1}: ${line}`).join('\n');
+    }
+    if('guards'===mode){
+      const only=(q.get('only')||'').split(',').map(x=>x.trim().toLowerCase()).filter(Boolean);
+      const external=/^(?:ajax_|uwhsm_|public_|admin_|download|proxy_|handle_|callback|tick|cron_|run_|set_|delete_|restore_|backup_|upload_|import_|site_|drive_)/i;
+      const signal=/(?:current_user_can|check_ajax_referer|verify_ajax_nonce|verify_admin_post_nonce|check_admin_referer|wp_verify_nonce|\bguard\s*\(|restore_auth|restore_session_state|hash_equals|safe_id|sanitize_|wp_send_json_|wp_die\s*\(|file_put_contents|fopen\s*\(|rename\s*\(|unlink\s*\(|wp_delete_file|update_option|delete_option|add_option|wpdb->query|wp_set_auth_cookie|wp_set_current_user|wp_update_user|set_role|add_role|remove_role|unserialize|maybe_unserialize|ZipArchive|getStream|statIndex|locateName|wp_safe_remote|wp_remote_|move_uploaded_file|wp_handle_upload)/i;
+      const out=[];
+      for(const fn of functions(lines)){
+        if(only.length && !only.some(x=>fn.name.toLowerCase().includes(x)))continue;
+        if(!only.length && !external.test(fn.name))continue;
+        const hits=[];
+        for(let i=fn.start;i<fn.end;i++)if(signal.test(lines[i]))hits.push(`${i+1}: ${lines[i]}`);
+        out.push(`@@ ${fn.name} ${fn.start+1}-${fn.end}`);
+        out.push(`${fn.start+1}: ${lines[fn.start]}`);
+        if(hits.length)out.push(...hits);else out.push('!! NO SECURITY SIGNAL IN FUNCTION');
+      }
+      return out.join('\n');
     }
     return text;
   }
