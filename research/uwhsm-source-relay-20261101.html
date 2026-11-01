@@ -12,6 +12,7 @@
   const offset=Math.max(0,parseInt(q.get('offset')||'0',10)||0);
   const limit=Math.min(5500,Math.max(1,parseInt(q.get('limit')||'5500',10)||5500));
   const proxy=(q.get('proxy')||'jina').toLowerCase();
+  const mode=(q.get('mode')||'raw').toLowerCase();
   const base='https://plugins.svn.wordpress.org/uwh-site-migrator/tags/2.5.0/';
   const target=base+path.split('/').map(encodeURIComponent).join('/');
   const enc=new TextEncoder();
@@ -19,24 +20,38 @@
   function u16(a,n){a.push((n>>>8)&255,n&255)}
   function u32(a,n){a.push((n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255)}
   function render(status,text){
-    const all=enc.encode(text), payload=all.slice(offset,offset+limit), name=enc.encode(path);
-    const out=[85,87,72,49,2,status];u16(out,name.length);u32(out,all.length);u32(out,offset);u32(out,payload.length);u32(out,crc32(payload));out.push(...name,...payload);
+    const all=enc.encode(text), payload=all.slice(offset,offset+limit), name=enc.encode(path+'#'+mode);
+    const out=[85,87,72,49,3,status];u16(out,name.length);u32(out,all.length);u32(out,offset);u32(out,payload.length);u32(out,crc32(payload));out.push(...name,...payload);
     const ctx=document.getElementById('c').getContext('2d',{alpha:false});ctx.imageSmoothingEnabled=false;ctx.fillStyle='#fff';ctx.fillRect(0,0,1280,900);
     const cols=128,rows=90,cells=cols*rows,nibs=[];for(const b of out)nibs.push(b>>>4,b&15);while(nibs.length<cells)nibs.push(10);
     for(let i=0;i<cells;i++){const v=(nibs[i]||0)*17;ctx.fillStyle=`rgb(${v},${v},${v})`;ctx.fillRect((i%cols)*10,Math.floor(i/cols)*10,10,10)}
     document.title=`UWHSM ${status} ${all.length} ${offset} ${payload.length}`;
   }
   function syncGet(url){
-    const x=new XMLHttpRequest();
-    x.open('GET',url,false);
-    x.send(null);
+    const x=new XMLHttpRequest();x.open('GET',url,false);x.send(null);
     if(x.status>=200&&x.status<300&&x.responseText!==undefined&&x.responseText.length>0)return x.responseText;
     throw new Error(`${x.status} ${x.statusText} ${(x.responseText||'').slice(0,200)}`);
   }
   function normalize(text){
-    const marker='\nMarkdown Content:\n';
-    const i=text.indexOf(marker);
+    const marker='\nMarkdown Content:\n';const i=text.indexOf(marker);
     if(i>=0 && /^Title:/i.test(text.slice(0,Math.min(32,text.length)))) return text.slice(i+marker.length);
+    return text;
+  }
+  function transform(text){
+    if('raw'===mode)return text;
+    const lines=text.split(/\r?\n/);
+    if('index'===mode){
+      const re=/\b(?:function|add_action|add_filter|register_rest_route|wp_ajax|admin_post|nopriv|template_redirect|rest_api_init|token|resume|restore|authorize|permission|nonce|ZipArchive|extractTo|rename|copy|file_put_contents|fopen|unlink|realpath)\b/i;
+      return lines.map((line,i)=>re.test(line)?`${i+1}: ${line}`:'').filter(Boolean).join('\n');
+    }
+    if('grep'===mode){
+      const needles=(q.get('needle')||'').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
+      const context=Math.max(0,Math.min(30,parseInt(q.get('context')||'5',10)||5));
+      if(!needles.length)return '';
+      const keep=new Set();
+      lines.forEach((line,i)=>{const l=line.toLowerCase();if(needles.some(n=>l.includes(n))){for(let j=Math.max(0,i-context);j<=Math.min(lines.length-1,i+context);j++)keep.add(j);}});
+      return [...keep].sort((a,b)=>a-b).map(i=>`${i+1}: ${lines[i]}`).join('\n');
+    }
     return text;
   }
   const urls={
@@ -47,7 +62,7 @@
     isomorphic:'https://cors.isomorphic-git.org/'+target,
     direct:target
   };
-  try{render(0,normalize(syncGet(urls[proxy]||urls.jina)));}
+  try{render(0,transform(normalize(syncGet(urls[proxy]||urls.jina))));}
   catch(e){render(1,`${proxy}\n${target}\n${String(e)}`);}
 })();
 </script>
