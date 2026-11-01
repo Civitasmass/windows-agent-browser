@@ -1,0 +1,47 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>UWHSM source relay</title>
+<style>html,body{margin:0;background:#fff;overflow:hidden}canvas{display:block;width:1600px;height:900px;image-rendering:pixelated}</style>
+<canvas id="c" width="1600" height="900"></canvas>
+<script>
+(async()=>{
+  'use strict';
+  const q=new URLSearchParams(location.search);
+  const path=(q.get('path')||'').replace(/^\/+/, '');
+  const offset=Math.max(0,parseInt(q.get('offset')||'0',10)||0);
+  const limit=Math.min(7000,Math.max(1,parseInt(q.get('limit')||'7000',10)||7000));
+  const base='https://plugins.svn.wordpress.org/uwh-site-migrator/tags/2.5.0/';
+  const target=base+path.split('/').map(encodeURIComponent).join('/');
+  const enc=new TextEncoder();
+  function crc32(bytes){let c=0xffffffff;for(const b of bytes){c^=b;for(let k=0;k<8;k++)c=(c>>>1)^((c&1)?0xedb88320:0)}return (c^0xffffffff)>>>0}
+  function u16(a,n){a.push((n>>>8)&255,n&255)}
+  function u32(a,n){a.push((n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255)}
+  function render(status,text){
+    const all=enc.encode(text), payload=all.slice(offset,offset+limit), name=enc.encode(path);
+    const out=[85,87,72,49,1,status];u16(out,name.length);u32(out,all.length);u32(out,offset);u32(out,payload.length);u32(out,crc32(payload));out.push(...name,...payload);
+    const ctx=document.getElementById('c').getContext('2d',{alpha:false});ctx.imageSmoothingEnabled=false;ctx.fillStyle='#fff';ctx.fillRect(0,0,1600,900);
+    const cols=160,rows=90,cells=cols*rows,nibs=[];for(const b of out)nibs.push(b>>>4,b&15);while(nibs.length<cells)nibs.push(10);
+    for(let i=0;i<cells;i++){const v=(nibs[i]||0)*17;ctx.fillStyle=`rgb(${v},${v},${v})`;ctx.fillRect((i%cols)*10,Math.floor(i/cols)*10,10,10)}
+    document.title=`UWHSM ${status} ${all.length} ${offset} ${payload.length}`;
+  }
+  render(2,'BOOT '+target);
+  const candidates=[
+    target,
+    'https://api.allorigins.win/raw?url='+encodeURIComponent(target),
+    'https://corsproxy.io/?url='+encodeURIComponent(target),
+    'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(target),
+    'https://cors.isomorphic-git.org/'+target,
+    'https://r.jina.ai/http://'+target.replace(/^https?:\/\//,'')
+  ];
+  let errors=[];
+  for(const u of candidates){
+    try{
+      const r=await fetch(u,{cache:'no-store',redirect:'follow'});
+      const t=await r.text();
+      if(r.ok && t && t.length>0){render(0,t);return;}
+      errors.push(`${u}\nHTTP ${r.status} ${r.statusText}\n${t.slice(0,200)}`);
+    }catch(e){errors.push(`${u}\n${String(e)}`)}
+  }
+  render(1,errors.join('\n---\n'));
+})();
+</script>
