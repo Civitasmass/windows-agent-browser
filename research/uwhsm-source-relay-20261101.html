@@ -6,7 +6,8 @@
 <script>
 (async()=>{
   'use strict';
-  const q=new URLSearchParams(location.search);
+  const rawParams=(location.hash && location.hash.length>1)?location.hash.slice(1):location.search.slice(1);
+  const q=new URLSearchParams(rawParams);
   const path=(q.get('path')||'').replace(/^\/+/, '');
   const offset=Math.max(0,parseInt(q.get('offset')||'0',10)||0);
   const limit=Math.min(7000,Math.max(1,parseInt(q.get('limit')||'7000',10)||7000));
