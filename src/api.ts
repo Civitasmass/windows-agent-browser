@@ -431,15 +431,30 @@ async function evaluate<T, A>(
   return runtime.evaluate<T>(expression, { awaitPromise: true });
 }
 
+const SCREENSHOT_EXTENSION_FORMATS: Record<
+  string,
+  NonNullable<ScreenshotOptions["format"]>
+> = {
+  ".png": "png",
+  ".jpg": "jpeg",
+  ".jpeg": "jpeg",
+  ".webp": "webp",
+};
+
 async function screenshot(
   runtime: BrowserRuntime,
   options: ScreenshotOptions = {},
 ): Promise<string> {
-  const format =
-    options.format ??
-    (options.path && extname(options.path).toLowerCase() === ".jpg"
-      ? "jpeg"
-      : "png");
+  const pathFormat = options.path
+    ? SCREENSHOT_EXTENSION_FORMATS[extname(options.path).toLowerCase()]
+    : undefined;
+  if (options.format && pathFormat && options.format !== pathFormat) {
+    throw new AgentBrowserError(
+      "SCREENSHOT_FORMAT_MISMATCH",
+      `Screenshot format "${options.format}" does not match the ${extname(options.path!)} extension of ${options.path}.`,
+    );
+  }
+  const format = options.format ?? pathFormat ?? "png";
   let clip:
     | { x: number; y: number; width: number; height: number; scale: number }
     | undefined;

@@ -431,6 +431,8 @@ class FakeApiRuntime {
             content: [10, 20, 30, 20, 30, 40, 10, 40],
           },
         };
+      case "Page.captureScreenshot":
+        return { data: Buffer.from(`image:${params.format}`).toString("base64") };
       default:
         throw new Error(`Unexpected page method: ${method}`);
     }
@@ -730,6 +732,42 @@ test("setViewport applies deterministic device metrics and validates dimensions"
     (error) =>
       error instanceof AgentBrowserError &&
       error.code === "INVALID_VIEWPORT",
+  );
+});
+
+test("screenshot infers its format from the path extension", async (t) => {
+  const config = await testConfig(t);
+  const runtime = new FakeApiRuntime(config);
+  const { page } = createAgentApi(runtime);
+  const dir = config.paths.appDir;
+
+  for (const [file, format] of [
+    ["shot.png", "png"],
+    ["shot.jpg", "jpeg"],
+    ["shot.JPEG", "jpeg"],
+    ["shot.webp", "webp"],
+    ["shot.bin", "png"],
+  ]) {
+    const path = join(dir, file);
+    runtime.calls.length = 0;
+    assert.equal(await page.screenshot({ path, quality: 80 }), path);
+    const params = runtime.calls.find(
+      (call) => call.method === "Page.captureScreenshot",
+    )?.params;
+    assert.equal(params.format, format, file);
+    assert.equal(params.quality, format === "png" ? undefined : 80, file);
+    assert.equal(await readFile(path, "utf8"), `image:${format}`, file);
+  }
+
+  assert.equal(
+    await page.screenshot({ path: join(dir, "explicit.bin"), format: "webp" }),
+    join(dir, "explicit.bin"),
+  );
+  await assert.rejects(
+    page.screenshot({ path: join(dir, "shot.png"), format: "jpeg" }),
+    (error) =>
+      error instanceof AgentBrowserError &&
+      error.code === "SCREENSHOT_FORMAT_MISMATCH",
   );
 });
 
